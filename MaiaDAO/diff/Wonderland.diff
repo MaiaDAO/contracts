@@ -1,0 +1,2938 @@
+[1mdiff --git a/BondDepository.sol b/BondDepository.sol[m
+[1mindex 19a18f1..283604a 100644[m
+[1m--- a/BondDepository.sol[m
+[1m+++ b/BondDepository.sol[m
+[36m@@ -118,6 +118,11 @@[m [mlibrary LowGasSafeMath {[m
+     function sub(int256 x, int256 y) internal pure returns (int256 z) {[m
+         require((z = x - y) <= x == (y >= 0));[m
+     }[m
+[32m+[m
+[32m+[m[32m    function div(uint256 x, uint256 y) internal pure returns(uint256 z){[m
+[32m+[m[32m        require(y > 0);[m
+[32m+[m[32m        z=x/y;[m
+[32m+[m[32m    }[m
+ }[m
+ [m
+ library Address {[m
+[36m@@ -410,8 +415,8 @@[m [mlibrary FixedPoint {[m
+ }[m
+ [m
+ interface ITreasury {[m
+[31m-    function deposit( uint _amount, address _token, uint _profit ) external returns ( bool );[m
+[31m-    function valueOf( address _token, uint _amount ) external view returns ( uint value_ );[m
+[32m+[m[32m    function deposit( uint _amount, address _token, uint _profit ) external returns ( uint );[m
+[32m+[m[32m    function valueOfToken( address _token, uint _amount ) external view returns ( uint value_ );[m
+ }[m
+ [m
+ interface IBondCalculator {[m
+[36m@@ -427,7 +432,7 @@[m [minterface IStakingHelper {[m
+     function stake( uint _amount, address _recipient ) external;[m
+ }[m
+ [m
+[31m-contract TimeBondDepository is Ownable {[m
+[32m+[m[32mcontract MaiaBondDepository is Ownable {[m
+ [m
+     using FixedPoint for *;[m
+     using SafeERC20 for IERC20;[m
+[36m@@ -551,7 +556,7 @@[m [mcontract TimeBondDepository is Ownable {[m
+     ) external onlyOwner() {[m
+         require( terms.controlVariable == 0, "Bonds must be initialized from 0" );[m
+         require( _controlVariable >= 40, "Can lock adjustment" );[m
+[31m-        require( _maxPayout <= 1000, "Payout cannot be above 1 percent" );[m
+[32m+[m[32m        require( _maxPayout <= 2000, "Payout cannot be above 1 percent" );[m
+         require( _vestingTerm >= 129600, "Vesting must be longer than 36 hours" );[m
+         require( _fee <= 10000, "DAO fee cannot exceed payout" );[m
+         terms = Terms ({[m
+[36m@@ -582,7 +587,7 @@[m [mcontract TimeBondDepository is Ownable {[m
+             require( _input >= 129600, "Vesting must be longer than 36 hours" );[m
+             terms.vestingTerm = uint32(_input);[m
+         } else if ( _parameter == PARAMETER.PAYOUT ) { // 1[m
+[31m-            require( _input <= 1000, "Payout cannot be above 1 percent" );[m
+[32m+[m[32m            require( _input <= 2000, "Payout cannot be above 1 percent" );[m
+             terms.maxPayout = _input;[m
+         } else if ( _parameter == PARAMETER.FEE ) { // 2[m
+             require( _input <= 10000, "DAO fee cannot exceed payout" );[m
+[36m@@ -668,21 +673,20 @@[m [mcontract TimeBondDepository is Ownable {[m
+         require( _depositor != address(0), "Invalid address" );[m
+         require(msg.sender == _depositor || allowedZappers[msg.sender], "LFNA");[m
+         decayDebt();[m
+[31m-        [m
+[31m-        [m
+[32m+[m
+         uint priceInUSD = bondPriceInUSD(); // Stored in bond info[m
+         uint nativePrice = _bondPrice();[m
+ [m
+         require( _maxPrice >= nativePrice, "Slippage limit: more than max price" ); // slippage protection[m
+ [m
+[31m-        uint value = treasury.valueOf( address(principle), _amount );[m
+[32m+[m[32m        uint value = treasury.valueOfToken( address(principle), _amount );[m
+         uint payout = payoutFor( value ); // payout to bonder is computed[m
+         require( totalDebt.add(value) <= terms.maxDebt, "Max capacity reached" );[m
+         require( payout >= 10000000, "Bond too small" ); // must be > 0.01 Time ( underflow protection )[m
+         require( payout <= maxPayout(), "Bond too large"); // size protection because there is no slippage[m
+ [m
+         // profits are calculated[m
+[31m-        uint fee = payout.mul( terms.fee )/ 10000 ;[m
+[32m+[m[32m        uint fee = (payout.mul( terms.fee )).div(10000);[m
+         uint profit = value.sub( payout ).sub( fee );[m
+ [m
+         uint balanceBefore = Time.balanceOf(address(this));[m
+[36m@@ -698,7 +702,7 @@[m [mcontract TimeBondDepository is Ownable {[m
+         if ( fee != 0 ) { // fee is transferred to dao [m
+             Time.safeTransfer( DAO, fee ); [m
+         }[m
+[31m-        require(balanceBefore.add(profit) == Time.balanceOf(address(this)), "Not enough Time to cover profit");[m
+[32m+[m[32m        require(balanceBefore.add(payout) == Time.balanceOf(address(this)), "Not enough Time to cover profit");[m
+         // total debt is increased[m
+         totalDebt = totalDebt.add( value ); [m
+                 [m
+[36m@@ -910,7 +914,7 @@[m [mcontract TimeBondDepository is Ownable {[m
+      */[m
+     function debtDecay() public view returns ( uint decay_ ) {[m
+         uint32 timeSinceLast = uint32(block.timestamp).sub32( lastDecay );[m
+[31m-        decay_ = totalDebt.mul( timeSinceLast ) / terms.vestingTerm;[m
+[32m+[m[32m        decay_ = (totalDebt.mul( timeSinceLast )).div(terms.vestingTerm);[m
+         if ( decay_ > totalDebt ) {[m
+             decay_ = totalDebt;[m
+         }[m
+[36m@@ -967,4 +971,17 @@[m [mcontract TimeBondDepository is Ownable {[m
+         emit LogRecoverLostToken(address(_token), balance);[m
+         return true;[m
+     }[m
+[32m+[m
+[32m+[m[32m    function recoverLostETH() internal {[m
+[32m+[m[32m        if (address(this).balance > 0) safeTransferETH(DAO, address(this).balance);[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /// @notice Transfers ETH to the recipient address[m
+[32m+[m[32m    /// @dev Fails with `STE`[m
+[32m+[m[32m    /// @param to The destination of the transfer[m
+[32m+[m[32m    /// @param value The value to be transferred[m
+[32m+[m[32m    function safeTransferETH(address to, uint256 value) internal {[m
+[32m+[m[32m        (bool success, ) = to.call{value: value}(new bytes(0));[m
+[32m+[m[32m        require(success, 'STE');[m
+[32m+[m[32m    }[m
+ }[m
+\ No newline at end of file[m
+[1mdiff --git a/BondDepositoryAntient.sol b/BondDepositoryAntient.sol[m
+[1mindex 19a18f1..94167f8 100644[m
+[1m--- a/BondDepositoryAntient.sol[m
+[1m+++ b/BondDepositoryAntient.sol[m
+[36m@@ -118,6 +118,11 @@[m [mlibrary LowGasSafeMath {[m
+     function sub(int256 x, int256 y) internal pure returns (int256 z) {[m
+         require((z = x - y) <= x == (y >= 0));[m
+     }[m
+[32m+[m
+[32m+[m[32m    function div(uint256 x, uint256 y) internal pure returns(uint256 z){[m
+[32m+[m[32m        require(y > 0);[m
+[32m+[m[32m        z=x/y;[m
+[32m+[m[32m    }[m
+ }[m
+ [m
+ library Address {[m
+[36m@@ -410,8 +415,8 @@[m [mlibrary FixedPoint {[m
+ }[m
+ [m
+ interface ITreasury {[m
+[31m-    function deposit( uint _amount, address _token, uint _profit ) external returns ( bool );[m
+[31m-    function valueOf( address _token, uint _amount ) external view returns ( uint value_ );[m
+[32m+[m[32m    function deposit( uint _amount, address _token, uint _profit ) external returns ( uint );[m
+[32m+[m[32m    function valueOfToken( address _token, uint _amount ) external view returns ( uint value_ );[m
+ }[m
+ [m
+ interface IBondCalculator {[m
+[36m@@ -476,7 +481,7 @@[m [mcontract TimeBondDepository is Ownable {[m
+     mapping (address => bool) public allowedZappers;[m
+ [m
+ [m
+[31m-[m
+[32m+[m[32m    uint256 public startRedeem;[m
+ [m
+     /* ======== STRUCTS ======== */[m
+ [m
+[36m@@ -562,13 +567,14 @@[m [mcontract TimeBondDepository is Ownable {[m
+             maxDebt: _maxDebt,[m
+             vestingTerm: _vestingTerm[m
+         });[m
+[32m+[m[32m        startRedeem = block.timestamp + 10 days;[m
+         lastDecay = uint32(block.timestamp);[m
+         emit InitTerms(terms);[m
+     }[m
+ [m
+ [m
+ [m
+[31m-    [m
+[32m+[m
+     /* ======== POLICY FUNCTIONS ======== */[m
+ [m
+     enum PARAMETER { VESTING, PAYOUT, FEE, DEBT, MINPRICE }[m
+[36m@@ -668,21 +674,20 @@[m [mcontract TimeBondDepository is Ownable {[m
+         require( _depositor != address(0), "Invalid address" );[m
+         require(msg.sender == _depositor || allowedZappers[msg.sender], "LFNA");[m
+         decayDebt();[m
+[31m-        [m
+[31m-        [m
+[32m+[m
+         uint priceInUSD = bondPriceInUSD(); // Stored in bond info[m
+         uint nativePrice = _bondPrice();[m
+ [m
+         require( _maxPrice >= nativePrice, "Slippage limit: more than max price" ); // slippage protection[m
+ [m
+[31m-        uint value = treasury.valueOf( address(principle), _amount );[m
+[32m+[m[32m        uint value = treasury.valueOfToken( address(principle), _amount );[m
+         uint payout = payoutFor( value ); // payout to bonder is computed[m
+         require( totalDebt.add(value) <= terms.maxDebt, "Max capacity reached" );[m
+         require( payout >= 10000000, "Bond too small" ); // must be > 0.01 Time ( underflow protection )[m
+         require( payout <= maxPayout(), "Bond too large"); // size protection because there is no slippage[m
+ [m
+         // profits are calculated[m
+[31m-        uint fee = payout.mul( terms.fee )/ 10000 ;[m
+[32m+[m[32m        uint fee = (payout.mul( terms.fee )).div(10000);[m
+         uint profit = value.sub( payout ).sub( fee );[m
+ [m
+         uint balanceBefore = Time.balanceOf(address(this));[m
+[36m@@ -698,7 +703,7 @@[m [mcontract TimeBondDepository is Ownable {[m
+         if ( fee != 0 ) { // fee is transferred to dao [m
+             Time.safeTransfer( DAO, fee ); [m
+         }[m
+[31m-        require(balanceBefore.add(profit) == Time.balanceOf(address(this)), "Not enough Time to cover profit");[m
+[32m+[m[32m        require(balanceBefore.add(payout) == Time.balanceOf(address(this)), "Not enough Time to cover profit");[m
+         // total debt is increased[m
+         totalDebt = totalDebt.add( value ); [m
+                 [m
+[36m@@ -725,6 +730,7 @@[m [mcontract TimeBondDepository is Ownable {[m
+      *  @return uint[m
+      */ [m
+     function redeem( address _recipient, bool _stake ) external returns ( uint ) {[m
+[32m+[m[32m        require(block.timestamp >= startRedeem, "Redeem has not started yet.");[m
+         require(msg.sender == _recipient, "NA");     [m
+         Bond memory info = bondInfo[ _recipient ];[m
+         // (seconds since last interaction / vesting term remaining)[m
+[36m@@ -822,7 +828,7 @@[m [mcontract TimeBondDepository is Ownable {[m
+      *  @return uint[m
+      */[m
+     function maxPayout() public view returns ( uint ) {[m
+[31m-        return Time.totalSupply().mul( terms.maxPayout ) / 100000 ;[m
+[32m+[m[32m        return (Time.totalSupply().add(50000000000000)).mul( terms.maxPayout ) / 100000 ;[m
+     }[m
+ [m
+     /**[m
+[36m@@ -877,7 +883,7 @@[m [mcontract TimeBondDepository is Ownable {[m
+      *  @return debtRatio_ uint[m
+      */[m
+     function debtRatio() public view returns ( uint debtRatio_ ) {   [m
+[31m-        uint supply = Time.totalSupply();[m
+[32m+[m[32m        uint supply = Time.totalSupply().add(50000000000000);[m
+         debtRatio_ = FixedPoint.fraction( [m
+             currentDebt().mul( 1e9 ), [m
+             supply[m
+[36m@@ -910,7 +916,7 @@[m [mcontract TimeBondDepository is Ownable {[m
+      */[m
+     function debtDecay() public view returns ( uint decay_ ) {[m
+         uint32 timeSinceLast = uint32(block.timestamp).sub32( lastDecay );[m
+[31m-        decay_ = totalDebt.mul( timeSinceLast ) / terms.vestingTerm;[m
+[32m+[m[32m        decay_ = (totalDebt.mul( timeSinceLast )).div(terms.vestingTerm);[m
+         if ( decay_ > totalDebt ) {[m
+             decay_ = totalDebt;[m
+         }[m
+[36m@@ -967,4 +973,17 @@[m [mcontract TimeBondDepository is Ownable {[m
+         emit LogRecoverLostToken(address(_token), balance);[m
+         return true;[m
+     }[m
+[32m+[m
+[32m+[m[32m    function recoverLostETH() internal {[m
+[32m+[m[32m        if (address(this).balance > 0) safeTransferETH(DAO, address(this).balance);[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /// @notice Transfers ETH to the recipient address[m
+[32m+[m[32m    /// @dev Fails with `STE`[m
+[32m+[m[32m    /// @param to The destination of the transfer[m
+[32m+[m[32m    /// @param value The value to be transferred[m
+[32m+[m[32m    function safeTransferETH(address to, uint256 value) internal {[m
+[32m+[m[32m        (bool success, ) = to.call{value: value}(new bytes(0));[m
+[32m+[m[32m        require(success, 'STE');[m
+[32m+[m[32m    }[m
+ }[m
+\ No newline at end of file[m
+[1mdiff --git a/EthBondDepository.sol b/EthBondDepository.sol[m
+[1mindex d271f80..fec2429 100644[m
+[1m--- a/EthBondDepository.sol[m
+[1m+++ b/EthBondDepository.sol[m
+[36m@@ -99,6 +99,11 @@[m [mlibrary LowGasSafeMath {[m
+     function sub(int256 x, int256 y) internal pure returns (int256 z) {[m
+         require((z = x - y) <= x == (y >= 0));[m
+     }[m
+[32m+[m
+[32m+[m[32m    function div(uint256 x, uint256 y) internal pure returns(uint256 z){[m
+[32m+[m[32m        require(y > 0);[m
+[32m+[m[32m        z=x/y;[m
+[32m+[m[32m    }[m
+ }[m
+ [m
+ library Address {[m
+[36m@@ -423,8 +428,8 @@[m [minterface AggregatorV3Interface {[m
+ }[m
+ [m
+ interface ITreasury {[m
+[31m-    function deposit( uint _amount, address _token, uint _profit ) external returns ( bool );[m
+[31m-    function valueOf( address _token, uint _amount ) external view returns ( uint value_ );[m
+[32m+[m[32m    function deposit( uint _amount, address _token, uint _profit ) external returns ( uint );[m
+[32m+[m[32m    function valueOfToken( address _token, uint _amount ) external view returns ( uint value_ );[m
+     function mintRewards( address _recipient, uint _amount ) external;[m
+ }[m
+ [m
+[36m@@ -436,16 +441,16 @@[m [minterface IStakingHelper {[m
+     function stake( uint _amount, address _recipient ) external;[m
+ }[m
+ [m
+[31m-interface IWAVAX9 is IERC20 {[m
+[32m+[m[32minterface IWMATIC9 is IERC20 {[m
+     /// @notice Deposit ether to get wrapped ether[m
+     function deposit() external payable;[m
+ }[m
+ [m
+[31m-contract TimeBondDepository is Ownable {[m
+[32m+[m[32mcontract MaiaBondDepository is Ownable {[m
+ [m
+     using FixedPoint for *;[m
+     using SafeERC20 for IERC20;[m
+[31m-    using SafeERC20 for IWAVAX9;[m
+[32m+[m[32m    using SafeERC20 for IWMATIC9;[m
+     using LowGasSafeMath for uint;[m
+     using LowGasSafeMath for uint32;[m
+ [m
+[36m@@ -464,7 +469,7 @@[m [mcontract TimeBondDepository is Ownable {[m
+ [m
+     /* ======== STATE VARIABLES ======== */[m
+     IERC20 public immutable Time; // token given as payment for bond[m
+[31m-    IWAVAX9 public immutable principle; // token used to create bond[m
+[32m+[m[32m    IWMATIC9 public immutable principle; // token used to create bond[m
+     ITreasury public immutable treasury; // mints Time when receives principle[m
+     address public immutable DAO; // receives profit share from bond[m
+ [m
+[36m@@ -529,7 +534,7 @@[m [mcontract TimeBondDepository is Ownable {[m
+         require( _Time != address(0) );[m
+         Time = IERC20(_Time);[m
+         require( _principle != address(0) );[m
+[31m-        principle = IWAVAX9(_principle);[m
+[32m+[m[32m        principle = IWMATIC9(_principle);[m
+         require( _treasury != address(0) );[m
+         treasury = ITreasury(_treasury);[m
+         require( _DAO != address(0) );[m
+[36m@@ -670,7 +675,7 @@[m [mcontract TimeBondDepository is Ownable {[m
+ [m
+         require( _maxPrice >= nativePrice, "Slippage limit: more than max price" ); // slippage protection[m
+ [m
+[31m-        uint value = treasury.valueOf( address(principle), _amount );[m
+[32m+[m[32m        uint value = treasury.valueOfToken( address(principle), _amount );[m
+         uint payout = payoutFor( value ); // payout to bonder is computed[m
+ [m
+         require( payout >= 10000000, "Bond too small" ); // must be > 0.01 Time ( underflow protection )[m
+[36m@@ -898,7 +903,7 @@[m [mcontract TimeBondDepository is Ownable {[m
+      */[m
+     function debtDecay() public view returns ( uint decay_ ) {[m
+         uint32 timeSinceLast = uint32(block.timestamp).sub32( lastDecay );[m
+[31m-        decay_ = totalDebt.mul( timeSinceLast )/ terms.vestingTerm;[m
+[32m+[m[32m        decay_ = (totalDebt.mul( timeSinceLast )).div(terms.vestingTerm);[m
+         if ( decay_ > totalDebt ) {[m
+             decay_ = totalDebt;[m
+         }[m
+[36m@@ -916,7 +921,7 @@[m [mcontract TimeBondDepository is Ownable {[m
+         uint vesting = bond.vesting;[m
+ [m
+         if ( vesting > 0 ) {[m
+[31m-            percentVested_ = secondsSinceLast.mul( 10000 )/vesting;[m
+[32m+[m[32m            percentVested_ = (secondsSinceLast.mul( 10000 )).div(vesting);[m
+         } else {[m
+             percentVested_ = 0;[m
+         }[m
+[1mdiff --git a/FixedBondDepository.sol b/FixedBondDepository.sol[m
+[1mindex 19a18f1..dc3f53c 100644[m
+[1m--- a/FixedBondDepository.sol[m
+[1m+++ b/FixedBondDepository.sol[m
+[36m@@ -118,6 +118,11 @@[m [mlibrary LowGasSafeMath {[m
+     function sub(int256 x, int256 y) internal pure returns (int256 z) {[m
+         require((z = x - y) <= x == (y >= 0));[m
+     }[m
+[32m+[m
+[32m+[m[32m    function div(uint256 x, uint256 y) internal pure returns(uint256 z){[m
+[32m+[m[32m        require(y > 0);[m
+[32m+[m[32m        z=x/y;[m
+[32m+[m[32m    }[m
+ }[m
+ [m
+ library Address {[m
+[36m@@ -410,8 +415,8 @@[m [mlibrary FixedPoint {[m
+ }[m
+ [m
+ interface ITreasury {[m
+[31m-    function deposit( uint _amount, address _token, uint _profit ) external returns ( bool );[m
+[31m-    function valueOf( address _token, uint _amount ) external view returns ( uint value_ );[m
+[32m+[m[32m    function deposit( uint _amount, address _token, uint _profit ) external returns ( uint );[m
+[32m+[m[32m    function valueOfToken( address _token, uint _amount ) external view returns ( uint value_ );[m
+ }[m
+ [m
+ interface IBondCalculator {[m
+[36m@@ -427,7 +432,7 @@[m [minterface IStakingHelper {[m
+     function stake( uint _amount, address _recipient ) external;[m
+ }[m
+ [m
+[31m-contract TimeBondDepository is Ownable {[m
+[32m+[m[32mcontract MaiaBondDepository is Ownable {[m
+ [m
+     using FixedPoint for *;[m
+     using SafeERC20 for IERC20;[m
+[36m@@ -551,7 +556,7 @@[m [mcontract TimeBondDepository is Ownable {[m
+     ) external onlyOwner() {[m
+         require( terms.controlVariable == 0, "Bonds must be initialized from 0" );[m
+         require( _controlVariable >= 40, "Can lock adjustment" );[m
+[31m-        require( _maxPayout <= 1000, "Payout cannot be above 1 percent" );[m
+[32m+[m[32m        require( _maxPayout <= 10000, "Payout cannot be above 1 percent" );[m
+         require( _vestingTerm >= 129600, "Vesting must be longer than 36 hours" );[m
+         require( _fee <= 10000, "DAO fee cannot exceed payout" );[m
+         terms = Terms ({[m
+[36m@@ -582,7 +587,7 @@[m [mcontract TimeBondDepository is Ownable {[m
+             require( _input >= 129600, "Vesting must be longer than 36 hours" );[m
+             terms.vestingTerm = uint32(_input);[m
+         } else if ( _parameter == PARAMETER.PAYOUT ) { // 1[m
+[31m-            require( _input <= 1000, "Payout cannot be above 1 percent" );[m
+[32m+[m[32m            require( _input <= 10000, "Payout cannot be above 1 percent" );[m
+             terms.maxPayout = _input;[m
+         } else if ( _parameter == PARAMETER.FEE ) { // 2[m
+             require( _input <= 10000, "DAO fee cannot exceed payout" );[m
+[36m@@ -668,21 +673,20 @@[m [mcontract TimeBondDepository is Ownable {[m
+         require( _depositor != address(0), "Invalid address" );[m
+         require(msg.sender == _depositor || allowedZappers[msg.sender], "LFNA");[m
+         decayDebt();[m
+[31m-        [m
+[31m-        [m
+[32m+[m
+         uint priceInUSD = bondPriceInUSD(); // Stored in bond info[m
+         uint nativePrice = _bondPrice();[m
+ [m
+         require( _maxPrice >= nativePrice, "Slippage limit: more than max price" ); // slippage protection[m
+ [m
+[31m-        uint value = treasury.valueOf( address(principle), _amount );[m
+[32m+[m[32m        uint value = treasury.valueOfToken( address(principle), _amount );[m
+         uint payout = payoutFor( value ); // payout to bonder is computed[m
+         require( totalDebt.add(value) <= terms.maxDebt, "Max capacity reached" );[m
+         require( payout >= 10000000, "Bond too small" ); // must be > 0.01 Time ( underflow protection )[m
+         require( payout <= maxPayout(), "Bond too large"); // size protection because there is no slippage[m
+ [m
+         // profits are calculated[m
+[31m-        uint fee = payout.mul( terms.fee )/ 10000 ;[m
+[32m+[m[32m        uint fee = (payout.mul( terms.fee )).div(10000);[m
+         uint profit = value.sub( payout ).sub( fee );[m
+ [m
+         uint balanceBefore = Time.balanceOf(address(this));[m
+[36m@@ -698,7 +702,7 @@[m [mcontract TimeBondDepository is Ownable {[m
+         if ( fee != 0 ) { // fee is transferred to dao [m
+             Time.safeTransfer( DAO, fee ); [m
+         }[m
+[31m-        require(balanceBefore.add(profit) == Time.balanceOf(address(this)), "Not enough Time to cover profit");[m
+[32m+[m[32m        require(balanceBefore.add(payout) == Time.balanceOf(address(this)), "Not enough Time to cover profit");[m
+         // total debt is increased[m
+         totalDebt = totalDebt.add( value ); [m
+                 [m
+[36m@@ -840,10 +844,7 @@[m [mcontract TimeBondDepository is Ownable {[m
+      *  @return price_ uint[m
+      */[m
+     function bondPrice() public view returns ( uint price_ ) {        [m
+[31m-        price_ = terms.controlVariable.mul( debtRatio() ).add( 1000000000 ) / 1e7;[m
+[31m-        if ( price_ < terms.minimumPrice ) {[m
+[31m-            price_ = terms.minimumPrice;[m
+[31m-        }[m
+[32m+[m[32m        price_ = terms.minimumPrice;[m[41m        [m
+     }[m
+ [m
+     /**[m
+[36m@@ -851,12 +852,7 @@[m [mcontract TimeBondDepository is Ownable {[m
+      *  @return price_ uint[m
+      */[m
+     function _bondPrice() internal returns ( uint price_ ) {[m
+[31m-        price_ = terms.controlVariable.mul( debtRatio() ).add( 1000000000 ) / 1e7;[m
+[31m-        if ( price_ < terms.minimumPrice ) {[m
+[31m-            price_ = terms.minimumPrice;        [m
+[31m-        } else if ( terms.minimumPrice != 0 ) {[m
+[31m-            terms.minimumPrice = 0;[m
+[31m-        }[m
+[32m+[m[32m        price_ = terms.minimumPrice;[m[41m        [m
+     }[m
+ [m
+     /**[m
+[36m@@ -910,7 +906,7 @@[m [mcontract TimeBondDepository is Ownable {[m
+      */[m
+     function debtDecay() public view returns ( uint decay_ ) {[m
+         uint32 timeSinceLast = uint32(block.timestamp).sub32( lastDecay );[m
+[31m-        decay_ = totalDebt.mul( timeSinceLast ) / terms.vestingTerm;[m
+[32m+[m[32m        decay_ = (totalDebt.mul( timeSinceLast )).div(terms.vestingTerm);[m
+         if ( decay_ > totalDebt ) {[m
+             decay_ = totalDebt;[m
+         }[m
+[36m@@ -967,4 +963,17 @@[m [mcontract TimeBondDepository is Ownable {[m
+         emit LogRecoverLostToken(address(_token), balance);[m
+         return true;[m
+     }[m
+[32m+[m
+[32m+[m[32m    function recoverLostETH() internal {[m
+[32m+[m[32m        if (address(this).balance > 0) safeTransferETH(DAO, address(this).balance);[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /// @notice Transfers ETH to the recipient address[m
+[32m+[m[32m    /// @dev Fails with `STE`[m
+[32m+[m[32m    /// @param to The destination of the transfer[m
+[32m+[m[32m    /// @param value The value to be transferred[m
+[32m+[m[32m    function safeTransferETH(address to, uint256 value) internal {[m
+[32m+[m[32m        (bool success, ) = to.call{value: value}(new bytes(0));[m
+[32m+[m[32m        require(success, 'STE');[m
+[32m+[m[32m    }[m
+ }[m
+\ No newline at end of file[m
+[1mdiff --git a/MaiaERC20.sol b/MaiaERC20.sol[m
+[1mindex a96222e..8f5a943 100644[m
+[1m--- a/MaiaERC20.sol[m
+[1m+++ b/MaiaERC20.sol[m
+[36m@@ -387,11 +387,11 @@[m [mcontract VaultOwned is Ownable {[m
+ [m
+ }[m
+ [m
+[31m-contract TimeERC20Token is ERC20Permit, VaultOwned {[m
+[32m+[m[32mcontract MaiaERC20Token is ERC20Permit, VaultOwned {[m
+ [m
+     using LowGasSafeMath for uint256;[m
+ [m
+[31m-    constructor() ERC20("Time", "TIME", 9) {[m
+[32m+[m[32m    constructor() ERC20("Maia", "MAIA", 9) {[m
+     }[m
+ [m
+     function mint(address account_, uint256 amount_) external onlyVault() {[m
+[1mdiff --git a/MetisBondDepository.sol b/MetisBondDepository.sol[m
+[1mindex d271f80..15ec795 100644[m
+[1m--- a/MetisBondDepository.sol[m
+[1m+++ b/MetisBondDepository.sol[m
+[36m@@ -99,6 +99,11 @@[m [mlibrary LowGasSafeMath {[m
+     function sub(int256 x, int256 y) internal pure returns (int256 z) {[m
+         require((z = x - y) <= x == (y >= 0));[m
+     }[m
+[32m+[m
+[32m+[m[32m    function div(uint256 x, uint256 y) internal pure returns(uint256 z){[m
+[32m+[m[32m        require(y > 0);[m
+[32m+[m[32m        z=x/y;[m
+[32m+[m[32m    }[m
+ }[m
+ [m
+ library Address {[m
+[36m@@ -391,40 +396,10 @@[m [mlibrary FixedPoint {[m
+     }[m
+ }[m
+ [m
+[31m-interface AggregatorV3Interface {[m
+[31m-[m
+[31m-  function decimals() external view returns (uint8);[m
+[31m-  function description() external view returns (string memory);[m
+[31m-  function version() external view returns (uint256);[m
+[31m-[m
+[31m-  // getRoundData and latestRoundData should both raise "No data present"[m
+[31m-  // if they do not have data to report, instead of returning unset values[m
+[31m-  // which could be misinterpreted as actual reported values.[m
+[31m-  function getRoundData(uint80 _roundId)[m
+[31m-    external[m
+[31m-    view[m
+[31m-    returns ([m
+[31m-      uint80 roundId,[m
+[31m-      int256 answer,[m
+[31m-      uint256 startedAt,[m
+[31m-      uint256 updatedAt,[m
+[31m-      uint80 answeredInRound[m
+[31m-    );[m
+[31m-  function latestRoundData()[m
+[31m-    external[m
+[31m-    view[m
+[31m-    returns ([m
+[31m-      uint80 roundId,[m
+[31m-      int256 answer,[m
+[31m-      uint256 startedAt,[m
+[31m-      uint256 updatedAt,[m
+[31m-      uint80 answeredInRound[m
+[31m-    );[m
+[31m-}[m
+ [m
+ interface ITreasury {[m
+[31m-    function deposit( uint _amount, address _token, uint _profit ) external returns ( bool );[m
+[31m-    function valueOf( address _token, uint _amount ) external view returns ( uint value_ );[m
+[32m+[m[32m    function deposit( uint _amount, address _token, uint _profit ) external returns ( uint );[m
+[32m+[m[32m    function valueOfToken( address _token, uint _amount ) external view returns ( uint value_ );[m
+     function mintRewards( address _recipient, uint _amount ) external;[m
+ }[m
+ [m
+[36m@@ -436,16 +411,16 @@[m [minterface IStakingHelper {[m
+     function stake( uint _amount, address _recipient ) external;[m
+ }[m
+ [m
+[31m-interface IWAVAX9 is IERC20 {[m
+[32m+[m[32minterface IWMATIC9 is IERC20 {[m
+     /// @notice Deposit ether to get wrapped ether[m
+     function deposit() external payable;[m
+ }[m
+ [m
+[31m-contract TimeBondDepository is Ownable {[m
+[32m+[m[32mcontract MaiaBondDepository is Ownable {[m
+ [m
+     using FixedPoint for *;[m
+     using SafeERC20 for IERC20;[m
+[31m-    using SafeERC20 for IWAVAX9;[m
+[32m+[m[32m    using SafeERC20 for IWMATIC9;[m
+     using LowGasSafeMath for uint;[m
+     using LowGasSafeMath for uint32;[m
+ [m
+[36m@@ -464,12 +439,10 @@[m [mcontract TimeBondDepository is Ownable {[m
+ [m
+     /* ======== STATE VARIABLES ======== */[m
+     IERC20 public immutable Time; // token given as payment for bond[m
+[31m-    IWAVAX9 public immutable principle; // token used to create bond[m
+[32m+[m[32m    IWMATIC9 public immutable principle; // token used to create bond[m
+     ITreasury public immutable treasury; // mints Time when receives principle[m
+     address public immutable DAO; // receives profit share from bond[m
+ [m
+[31m-    AggregatorV3Interface public priceFeed;[m
+[31m-[m
+     IStaking public staking; // to auto-stake payout[m
+     IStakingHelper public stakingHelper; // to stake and claim if no staking warmup[m
+     bool public useHelper;[m
+[36m@@ -523,19 +496,16 @@[m [mcontract TimeBondDepository is Ownable {[m
+         address _Time,[m
+         address _principle,[m
+         address _treasury, [m
+[31m-        address _DAO,[m
+[31m-        address _feed[m
+[32m+[m[32m        address _DAO[m
+     ) {[m
+         require( _Time != address(0) );[m
+         Time = IERC20(_Time);[m
+         require( _principle != address(0) );[m
+[31m-        principle = IWAVAX9(_principle);[m
+[32m+[m[32m        principle = IWMATIC9(_principle);[m
+         require( _treasury != address(0) );[m
+         treasury = ITreasury(_treasury);[m
+         require( _DAO != address(0) );[m
+         DAO = _DAO;[m
+[31m-        require( _feed != address(0) );[m
+[31m-        priceFeed = AggregatorV3Interface( _feed );[m
+     }[m
+ [m
+     /**[m
+[36m@@ -670,7 +640,7 @@[m [mcontract TimeBondDepository is Ownable {[m
+ [m
+         require( _maxPrice >= nativePrice, "Slippage limit: more than max price" ); // slippage protection[m
+ [m
+[31m-        uint value = treasury.valueOf( address(principle), _amount );[m
+[32m+[m[32m        uint value = treasury.valueOfToken( address(principle), _amount );[m
+         uint payout = payoutFor( value ); // payout to bonder is computed[m
+ [m
+         require( payout >= 10000000, "Bond too small" ); // must be > 0.01 Time ( underflow protection )[m
+[36m@@ -847,20 +817,13 @@[m [mcontract TimeBondDepository is Ownable {[m
+         }[m
+     }[m
+ [m
+[31m-    /**[m
+[31m-     *  @notice get asset price from chainlink[m
+[31m-     */[m
+[31m-    function assetPrice() public view returns (int) {[m
+[31m-        ( , int price, , , ) = priceFeed.latestRoundData();[m
+[31m-        return price;[m
+[31m-    }[m
+ [m
+     /**[m
+      *  @notice converts bond price to DAI value[m
+      *  @return price_ uint[m
+      */[m
+     function bondPriceInUSD() public view returns ( uint price_ ) {[m
+[31m-        price_ = bondPrice().mul( uint( assetPrice() ) ).mul( 1e6 );[m
+[32m+[m[32m        price_ = bondPrice().mul( 1e6 );[m
+     }[m
+ [m
+ [m
+[36m@@ -876,13 +839,6 @@[m [mcontract TimeBondDepository is Ownable {[m
+         ).decode112with18()/ 1e18;[m
+     }[m
+ [m
+[31m-    /**[m
+[31m-     *  @notice debt ratio in same terms as reserve bonds[m
+[31m-     *  @return uint[m
+[31m-     */[m
+[31m-    function standardizedDebtRatio() external view returns ( uint ) {[m
+[31m-        return debtRatio().mul( uint( assetPrice() ) )/ 10**priceFeed.decimals(); // ETH feed is 8 decimals[m
+[31m-    }[m
+ [m
+     /**[m
+      *  @notice calculate debt factoring in decay[m
+[36m@@ -898,7 +854,7 @@[m [mcontract TimeBondDepository is Ownable {[m
+      */[m
+     function debtDecay() public view returns ( uint decay_ ) {[m
+         uint32 timeSinceLast = uint32(block.timestamp).sub32( lastDecay );[m
+[31m-        decay_ = totalDebt.mul( timeSinceLast )/ terms.vestingTerm;[m
+[32m+[m[32m        decay_ = (totalDebt.mul( timeSinceLast )).div(terms.vestingTerm);[m
+         if ( decay_ > totalDebt ) {[m
+             decay_ = totalDebt;[m
+         }[m
+[36m@@ -916,7 +872,7 @@[m [mcontract TimeBondDepository is Ownable {[m
+         uint vesting = bond.vesting;[m
+ [m
+         if ( vesting > 0 ) {[m
+[31m-            percentVested_ = secondsSinceLast.mul( 10000 )/vesting;[m
+[32m+[m[32m            percentVested_ = (secondsSinceLast.mul( 10000 )).div(vesting);[m
+         } else {[m
+             percentVested_ = 0;[m
+         }[m
+[1mdiff --git a/MetisFixedBondDepository.sol b/MetisFixedBondDepository.sol[m
+[1mindex d271f80..3eac945 100644[m
+[1m--- a/MetisFixedBondDepository.sol[m
+[1m+++ b/MetisFixedBondDepository.sol[m
+[36m@@ -99,6 +99,11 @@[m [mlibrary LowGasSafeMath {[m
+     function sub(int256 x, int256 y) internal pure returns (int256 z) {[m
+         require((z = x - y) <= x == (y >= 0));[m
+     }[m
+[32m+[m
+[32m+[m[32m    function div(uint256 x, uint256 y) internal pure returns(uint256 z){[m
+[32m+[m[32m        require(y > 0);[m
+[32m+[m[32m        z=x/y;[m
+[32m+[m[32m    }[m
+ }[m
+ [m
+ library Address {[m
+[36m@@ -391,40 +396,9 @@[m [mlibrary FixedPoint {[m
+     }[m
+ }[m
+ [m
+[31m-interface AggregatorV3Interface {[m
+[31m-[m
+[31m-  function decimals() external view returns (uint8);[m
+[31m-  function description() external view returns (string memory);[m
+[31m-  function version() external view returns (uint256);[m
+[31m-[m
+[31m-  // getRoundData and latestRoundData should both raise "No data present"[m
+[31m-  // if they do not have data to report, instead of returning unset values[m
+[31m-  // which could be misinterpreted as actual reported values.[m
+[31m-  function getRoundData(uint80 _roundId)[m
+[31m-    external[m
+[31m-    view[m
+[31m-    returns ([m
+[31m-      uint80 roundId,[m
+[31m-      int256 answer,[m
+[31m-      uint256 startedAt,[m
+[31m-      uint256 updatedAt,[m
+[31m-      uint80 answeredInRound[m
+[31m-    );[m
+[31m-  function latestRoundData()[m
+[31m-    external[m
+[31m-    view[m
+[31m-    returns ([m
+[31m-      uint80 roundId,[m
+[31m-      int256 answer,[m
+[31m-      uint256 startedAt,[m
+[31m-      uint256 updatedAt,[m
+[31m-      uint80 answeredInRound[m
+[31m-    );[m
+[31m-}[m
+[31m-[m
+ interface ITreasury {[m
+[31m-    function deposit( uint _amount, address _token, uint _profit ) external returns ( bool );[m
+[31m-    function valueOf( address _token, uint _amount ) external view returns ( uint value_ );[m
+[32m+[m[32m    function deposit( uint _amount, address _token, uint _profit ) external returns ( uint );[m
+[32m+[m[32m    function valueOfToken( address _token, uint _amount ) external view returns ( uint value_ );[m
+     function mintRewards( address _recipient, uint _amount ) external;[m
+ }[m
+ [m
+[36m@@ -436,16 +410,16 @@[m [minterface IStakingHelper {[m
+     function stake( uint _amount, address _recipient ) external;[m
+ }[m
+ [m
+[31m-interface IWAVAX9 is IERC20 {[m
+[32m+[m[32minterface IWMATIC9 is IERC20 {[m
+     /// @notice Deposit ether to get wrapped ether[m
+     function deposit() external payable;[m
+ }[m
+ [m
+[31m-contract TimeBondDepository is Ownable {[m
+[32m+[m[32mcontract MaiaBondDepository is Ownable {[m
+ [m
+     using FixedPoint for *;[m
+     using SafeERC20 for IERC20;[m
+[31m-    using SafeERC20 for IWAVAX9;[m
+[32m+[m[32m    using SafeERC20 for IWMATIC9;[m
+     using LowGasSafeMath for uint;[m
+     using LowGasSafeMath for uint32;[m
+ [m
+[36m@@ -464,12 +438,10 @@[m [mcontract TimeBondDepository is Ownable {[m
+ [m
+     /* ======== STATE VARIABLES ======== */[m
+     IERC20 public immutable Time; // token given as payment for bond[m
+[31m-    IWAVAX9 public immutable principle; // token used to create bond[m
+[32m+[m[32m    IWMATIC9 public immutable principle; // token used to create bond[m
+     ITreasury public immutable treasury; // mints Time when receives principle[m
+     address public immutable DAO; // receives profit share from bond[m
+ [m
+[31m-    AggregatorV3Interface public priceFeed;[m
+[31m-[m
+     IStaking public staking; // to auto-stake payout[m
+     IStakingHelper public stakingHelper; // to stake and claim if no staking warmup[m
+     bool public useHelper;[m
+[36m@@ -523,19 +495,16 @@[m [mcontract TimeBondDepository is Ownable {[m
+         address _Time,[m
+         address _principle,[m
+         address _treasury, [m
+[31m-        address _DAO,[m
+[31m-        address _feed[m
+[32m+[m[32m        address _DAO[m
+     ) {[m
+         require( _Time != address(0) );[m
+         Time = IERC20(_Time);[m
+         require( _principle != address(0) );[m
+[31m-        principle = IWAVAX9(_principle);[m
+[32m+[m[32m        principle = IWMATIC9(_principle);[m
+         require( _treasury != address(0) );[m
+         treasury = ITreasury(_treasury);[m
+         require( _DAO != address(0) );[m
+         DAO = _DAO;[m
+[31m-        require( _feed != address(0) );[m
+[31m-        priceFeed = AggregatorV3Interface( _feed );[m
+     }[m
+ [m
+     /**[m
+[36m@@ -555,7 +524,7 @@[m [mcontract TimeBondDepository is Ownable {[m
+     ) external onlyPolicy() {[m
+         require( currentDebt() == 0, "Debt must be 0 for initialization" );[m
+         require( _controlVariable >= 40, "Can lock adjustment" );[m
+[31m-        require( _maxPayout <= 1000, "Payout cannot be above 1 percent" );[m
+[32m+[m[32m        require( _maxPayout <= 10000, "Payout cannot be above 1 percent" );[m
+         require( _vestingTerm >= 129600, "Vesting must be longer than 36 hours" );[m
+         terms = Terms ({[m
+             controlVariable: _controlVariable,[m
+[36m@@ -583,7 +552,7 @@[m [mcontract TimeBondDepository is Ownable {[m
+             require( _input >= 129600, "Vesting must be longer than 36 hours" );[m
+             terms.vestingTerm = uint32(_input);[m
+         } else if ( _parameter == PARAMETER.PAYOUT ) { // 1[m
+[31m-            require( _input <= 1000, "Payout cannot be above 1 percent" );[m
+[32m+[m[32m            require( _input <= 10000, "Payout cannot be above 1 percent" );[m
+             terms.maxPayout = _input;[m
+         } else if ( _parameter == PARAMETER.DEBT ) { // 2[m
+             terms.maxDebt = _input;[m
+[36m@@ -670,7 +639,7 @@[m [mcontract TimeBondDepository is Ownable {[m
+ [m
+         require( _maxPrice >= nativePrice, "Slippage limit: more than max price" ); // slippage protection[m
+ [m
+[31m-        uint value = treasury.valueOf( address(principle), _amount );[m
+[32m+[m[32m        uint value = treasury.valueOfToken( address(principle), _amount );[m
+         uint payout = payoutFor( value ); // payout to bonder is computed[m
+ [m
+         require( payout >= 10000000, "Bond too small" ); // must be > 0.01 Time ( underflow protection )[m
+[36m@@ -822,16 +791,12 @@[m [mcontract TimeBondDepository is Ownable {[m
+         return FixedPoint.fraction( _value, bondPrice() ).decode112with18()/ 1e14;[m
+     }[m
+ [m
+[31m-[m
+     /**[m
+      *  @notice calculate current bond premium[m
+      *  @return price_ uint[m
+      */[m
+     function bondPrice() public view returns ( uint price_ ) {        [m
+[31m-        price_ = terms.controlVariable.mul( debtRatio() )/ 1e5;[m
+[31m-        if ( price_ < terms.minimumPrice ) {[m
+[31m-            price_ = terms.minimumPrice;[m
+[31m-        }[m
+[32m+[m[32m        price_ = terms.minimumPrice;[m[41m        [m
+     }[m
+ [m
+     /**[m
+[36m@@ -839,31 +804,17 @@[m [mcontract TimeBondDepository is Ownable {[m
+      *  @return price_ uint[m
+      */[m
+     function _bondPrice() internal returns ( uint price_ ) {[m
+[31m-        price_ = terms.controlVariable.mul( debtRatio() ).add( 1000000000 ) / 1e7;[m
+[31m-        if ( price_ < terms.minimumPrice ) {[m
+[31m-            price_ = terms.minimumPrice;        [m
+[31m-        } else if ( terms.minimumPrice != 0 ) {[m
+[31m-            terms.minimumPrice = 0;[m
+[31m-        }[m
+[32m+[m[32m        price_ = terms.minimumPrice;[m[41m        [m
+     }[m
+ [m
+[31m-    /**[m
+[31m-     *  @notice get asset price from chainlink[m
+[31m-     */[m
+[31m-    function assetPrice() public view returns (int) {[m
+[31m-        ( , int price, , , ) = priceFeed.latestRoundData();[m
+[31m-        return price;[m
+[31m-    }[m
+[31m-[m
+[31m-    /**[m
+[32m+[m[32m      /**[m
+      *  @notice converts bond price to DAI value[m
+      *  @return price_ uint[m
+      */[m
+     function bondPriceInUSD() public view returns ( uint price_ ) {[m
+[31m-        price_ = bondPrice().mul( uint( assetPrice() ) ).mul( 1e6 );[m
+[32m+[m[32m        price_ = bondPrice().mul( 10 ** principle.decimals() ) / 100;[m
+     }[m
+ [m
+[31m-[m
+     /**[m
+      *  @notice calculate current ratio of debt to Time supply[m
+      *  @return debtRatio_ uint[m
+[36m@@ -881,7 +832,7 @@[m [mcontract TimeBondDepository is Ownable {[m
+      *  @return uint[m
+      */[m
+     function standardizedDebtRatio() external view returns ( uint ) {[m
+[31m-        return debtRatio().mul( uint( assetPrice() ) )/ 10**priceFeed.decimals(); // ETH feed is 8 decimals[m
+[32m+[m[32m        return debtRatio();[m
+     }[m
+ [m
+     /**[m
+[36m@@ -898,7 +849,7 @@[m [mcontract TimeBondDepository is Ownable {[m
+      */[m
+     function debtDecay() public view returns ( uint decay_ ) {[m
+         uint32 timeSinceLast = uint32(block.timestamp).sub32( lastDecay );[m
+[31m-        decay_ = totalDebt.mul( timeSinceLast )/ terms.vestingTerm;[m
+[32m+[m[32m        decay_ = (totalDebt.mul( timeSinceLast )).div(terms.vestingTerm);[m
+         if ( decay_ > totalDebt ) {[m
+             decay_ = totalDebt;[m
+         }[m
+[36m@@ -916,7 +867,7 @@[m [mcontract TimeBondDepository is Ownable {[m
+         uint vesting = bond.vesting;[m
+ [m
+         if ( vesting > 0 ) {[m
+[31m-            percentVested_ = secondsSinceLast.mul( 10000 )/vesting;[m
+[32m+[m[32m            percentVested_ = (secondsSinceLast.mul( 10000 )).div(vesting);[m
+         } else {[m
+             percentVested_ = 0;[m
+         }[m
+[1mdiff --git a/StakingDistributor.sol b/StakingDistributor.sol[m
+[1mindex 34f3a8d..4cc41fc 100644[m
+[1m--- a/StakingDistributor.sol[m
+[1m+++ b/StakingDistributor.sol[m
+[36m@@ -429,7 +429,7 @@[m [mcontract Distributor is Ownable {[m
+      */[m
+     function addRecipient( address _recipient, uint _rewardRate ) external onlyOwner {[m
+         require( _recipient != address(0), "IA" );[m
+[31m-        require(_rewardRate <= 5000, "Too high reward rate");[m
+[32m+[m[32m        require(_rewardRate <= 50000, "Too high reward rate");[m
+         require(info.length <= 4, "limit recipients max to 5");[m
+         info.push( Info({[m
+             recipient: _recipient,[m
+[36m@@ -460,7 +460,7 @@[m [mcontract Distributor is Ownable {[m
+         @param _target uint[m
+      */[m
+     function setAdjustment( uint _index, bool _add, uint _rate, uint _target ) external onlyOwner {[m
+[31m-        require(_target <= 5000, "Too high reward rate");[m
+[32m+[m[32m        require(_target <= 50000, "Too high reward rate");[m
+         adjustments[ _index ] = Adjust({[m
+             add: _add,[m
+             rate: _rate,[m
+[1mdiff --git a/TokenBondDepository.sol b/TokenBondDepository.sol[m
+[1mindex d271f80..c37be0f 100644[m
+[1m--- a/TokenBondDepository.sol[m
+[1m+++ b/TokenBondDepository.sol[m
+[36m@@ -1,5 +1,6 @@[m
+ // SPDX-License-Identifier: AGPL-3.0-or-later[m
+ pragma solidity 0.7.5;[m
+[32m+[m[32mpragma abicoder v2;[m
+ [m
+ interface IOwnable {[m
+   function policy() external view returns (address);[m
+[36m@@ -11,43 +12,61 @@[m [minterface IOwnable {[m
+   function pullManagement() external;[m
+ }[m
+ [m
+[31m-contract Ownable is IOwnable {[m
+[31m-[m
+[31m-    address internal _owner;[m
+[31m-    address internal _newOwner;[m
+[31m-[m
+[31m-    event OwnershipPushed(address indexed previousOwner, address indexed newOwner);[m
+[31m-    event OwnershipPulled(address indexed previousOwner, address indexed newOwner);[m
+[32m+[m[32mcontract OwnableData {[m
+[32m+[m[32m    address public owner;[m
+[32m+[m[32m    address public pendingOwner;[m
+[32m+[m[32m}[m
+ [m
+[31m-    constructor () {[m
+[31m-        _owner = msg.sender;[m
+[31m-        emit OwnershipPushed( address(0), _owner );[m
+[32m+[m[32mcontract Ownable is OwnableData {[m
+[32m+[m[32m    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);[m
+[32m+[m
+[32m+[m[32m    /// @notice `owner` defaults to msg.sender on construction.[m
+[32m+[m[32m    constructor() {[m
+[32m+[m[32m        owner = msg.sender;[m
+[32m+[m[32m        emit OwnershipTransferred(address(0), msg.sender);[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /// @notice Transfers ownership to `newOwner`. Either directly or claimable by the new pending owner.[m
+[32m+[m[32m    /// Can only be invoked by the current `owner`.[m
+[32m+[m[32m    /// @param newOwner Address of the new owner.[m
+[32m+[m[32m    /// @param direct True if `newOwner` should be set immediately. False if `newOwner` needs to use `claimOwnership`.[m
+[32m+[m[32m    /// @param renounce Allows the `newOwner` to be `address(0)` if `direct` and `renounce` is True. Has no effect otherwise.[m
+[32m+[m[32m    function transferOwnership([m
+[32m+[m[32m        address newOwner,[m
+[32m+[m[32m        bool direct,[m
+[32m+[m[32m        bool renounce[m
+[32m+[m[32m    ) public onlyOwner {[m
+[32m+[m[32m        if (direct) {[m
+[32m+[m[32m            // Checks[m
+[32m+[m[32m            require(newOwner != address(0) || renounce, "Ownable: zero address");[m
+[32m+[m
+[32m+[m[32m            // Effects[m
+[32m+[m[32m            emit OwnershipTransferred(owner, newOwner);[m
+[32m+[m[32m            owner = newOwner;[m
+[32m+[m[32m            pendingOwner = address(0);[m
+[32m+[m[32m        } else {[m
+[32m+[m[32m            // Effects[m
+[32m+[m[32m            pendingOwner = newOwner;[m
+[32m+[m[32m        }[m
+     }[m
+ [m
+[31m-    function policy() public view override returns (address) {[m
+[31m-        return _owner;[m
+[31m-    }[m
+[32m+[m[32m    /// @notice Needs to be called by `pendingOwner` to claim ownership.[m
+[32m+[m[32m    function claimOwnership() public {[m
+[32m+[m[32m        address _pendingOwner = pendingOwner;[m
+ [m
+[31m-    modifier onlyPolicy() {[m
+[31m-        require( _owner == msg.sender, "Ownable: caller is not the owner" );[m
+[31m-        _;[m
+[31m-    }[m
+[32m+[m[32m        // Checks[m
+[32m+[m[32m        require(msg.sender == _pendingOwner, "Ownable: caller != pending owner");[m
+ [m
+[31m-    function renounceManagement() public virtual override onlyPolicy() {[m
+[31m-        emit OwnershipPushed( _owner, address(0) );[m
+[31m-        _owner = address(0);[m
+[32m+[m[32m        // Effects[m
+[32m+[m[32m        emit OwnershipTransferred(owner, _pendingOwner);[m
+[32m+[m[32m        owner = _pendingOwner;[m
+[32m+[m[32m        pendingOwner = address(0);[m
+     }[m
+ [m
+[31m-    function pushManagement( address newOwner_ ) public virtual override onlyPolicy() {[m
+[31m-        require( newOwner_ != address(0), "Ownable: new owner is the zero address");[m
+[31m-        emit OwnershipPushed( _owner, newOwner_ );[m
+[31m-        _newOwner = newOwner_;[m
+[31m-    }[m
+[31m-    [m
+[31m-    function pullManagement() public virtual override {[m
+[31m-        require( msg.sender == _newOwner, "Ownable: must be new owner to pull");[m
+[31m-        emit OwnershipPulled( _owner, _newOwner );[m
+[31m-        _owner = _newOwner;[m
+[32m+[m[32m    /// @notice Only allows the `owner` to execute the function.[m
+[32m+[m[32m    modifier onlyOwner() {[m
+[32m+[m[32m        require(msg.sender == owner, "Ownable: caller is not the owner");[m
+[32m+[m[32m        _;[m
+     }[m
+ }[m
+ [m
+[36m@@ -99,6 +118,11 @@[m [mlibrary LowGasSafeMath {[m
+     function sub(int256 x, int256 y) internal pure returns (int256 z) {[m
+         require((z = x - y) <= x == (y >= 0));[m
+     }[m
+[32m+[m
+[32m+[m[32m    function div(uint256 x, uint256 y) internal pure returns(uint256 z){[m
+[32m+[m[32m        require(y > 0);[m
+[32m+[m[32m        z=x/y;[m
+[32m+[m[32m    }[m
+ }[m
+ [m
+ library Address {[m
+[36m@@ -246,7 +270,6 @@[m [mlibrary Address {[m
+ [m
+     }[m
+ }[m
+[31m-[m
+ interface IERC20 {[m
+     function decimals() external view returns (uint8);[m
+ [m
+[36m@@ -423,11 +446,16 @@[m [minterface AggregatorV3Interface {[m
+ }[m
+ [m
+ interface ITreasury {[m
+[31m-    function deposit( uint _amount, address _token, uint _profit ) external returns ( bool );[m
+[31m-    function valueOf( address _token, uint _amount ) external view returns ( uint value_ );[m
+[32m+[m[32m    function deposit( uint _amount, address _token, uint _profit ) external returns ( uint );[m
+[32m+[m[32m    function valueOfToken( address _token, uint _amount ) external view returns ( uint value_ );[m
+     function mintRewards( address _recipient, uint _amount ) external;[m
+ }[m
+ [m
+[32m+[m[32minterface IBondCalculator {[m
+[32m+[m[32m    function valuation( address _LP, uint _amount ) external view returns ( uint );[m
+[32m+[m[32m    function markdown( address _LP ) external view returns ( uint );[m
+[32m+[m[32m}[m
+[32m+[m
+ interface IStaking {[m
+     function stake( uint _amount, address _recipient ) external returns ( bool );[m
+ }[m
+[36m@@ -436,16 +464,10 @@[m [minterface IStakingHelper {[m
+     function stake( uint _amount, address _recipient ) external;[m
+ }[m
+ [m
+[31m-interface IWAVAX9 is IERC20 {[m
+[31m-    /// @notice Deposit ether to get wrapped ether[m
+[31m-    function deposit() external payable;[m
+[31m-}[m
+[31m-[m
+ contract TimeBondDepository is Ownable {[m
+ [m
+     using FixedPoint for *;[m
+     using SafeERC20 for IERC20;[m
+[31m-    using SafeERC20 for IWAVAX9;[m
+     using LowGasSafeMath for uint;[m
+     using LowGasSafeMath for uint32;[m
+ [m
+[36m@@ -458,13 +480,18 @@[m [mcontract TimeBondDepository is Ownable {[m
+     event BondRedeemed( address indexed recipient, uint payout, uint remaining );[m
+     event BondPriceChanged( uint indexed priceInUSD, uint indexed internalPrice, uint indexed debtRatio );[m
+     event ControlVariableAdjustment( uint initialBCV, uint newBCV, uint adjustment, bool addition );[m
+[31m-[m
+[32m+[m[32m    event InitTerms( Terms terms);[m
+[32m+[m[32m    event LogSetTerms(PARAMETER param, uint value);[m
+[32m+[m[32m    event LogSetAdjustment( Adjust adjust);[m
+[32m+[m[32m    event LogSetStaking( address indexed stakingContract, bool isHelper);[m
+[32m+[m[32m    event LogRecoverLostToken( address indexed tokenToRecover, uint amount);[m
+ [m
+ [m
+ [m
+     /* ======== STATE VARIABLES ======== */[m
+[32m+[m
+     IERC20 public immutable Time; // token given as payment for bond[m
+[31m-    IWAVAX9 public immutable principle; // token used to create bond[m
+[32m+[m[32m    IERC20 public immutable principle; // token used to create bond[m
+     ITreasury public immutable treasury; // mints Time when receives principle[m
+     address public immutable DAO; // receives profit share from bond[m
+ [m
+[36m@@ -482,16 +509,17 @@[m [mcontract TimeBondDepository is Ownable {[m
+     uint public totalDebt; // total value of outstanding bonds; used for pricing[m
+     uint32 public lastDecay; // reference time for debt decay[m
+ [m
+[31m-[m
+     mapping (address => bool) public allowedZappers;[m
+ [m
+ [m
+[32m+[m
+[32m+[m
+     /* ======== STRUCTS ======== */[m
+ [m
+     // Info for creating new bonds[m
+     struct Terms {[m
+         uint controlVariable; // scaling variable for price[m
+[31m-        uint minimumPrice; // vs principle value. 4 decimals (1500 = 0.15)[m
+[32m+[m[32m        uint minimumPrice; // vs principle value[m
+         uint maxPayout; // in thousandths of a %. i.e. 500 = 0.5%[m
+         uint maxDebt; // 9 decimal debt ratio, max % total supply created as debt[m
+         uint32 vestingTerm; // in seconds[m
+[36m@@ -501,8 +529,8 @@[m [mcontract TimeBondDepository is Ownable {[m
+     struct Bond {[m
+         uint payout; // Time remaining to be paid[m
+         uint pricePaid; // In DAI, for front end viewing[m
+[31m-        uint32 vesting; // Seconds left to vest[m
+         uint32 lastTime; // Last interaction[m
+[32m+[m[32m        uint32 vesting; // Seconds left to vest[m
+     }[m
+ [m
+     // Info for incremental adjustments to control variable [m
+[36m@@ -523,13 +551,13 @@[m [mcontract TimeBondDepository is Ownable {[m
+         address _Time,[m
+         address _principle,[m
+         address _treasury, [m
+[31m-        address _DAO,[m
+[32m+[m[32m        address _DAO,[m[41m [m
+         address _feed[m
+     ) {[m
+         require( _Time != address(0) );[m
+         Time = IERC20(_Time);[m
+         require( _principle != address(0) );[m
+[31m-        principle = IWAVAX9(_principle);[m
+[32m+[m[32m        principle = IERC20(_principle);[m
+         require( _treasury != address(0) );[m
+         treasury = ITreasury(_treasury);[m
+         require( _DAO != address(0) );[m
+[36m@@ -541,7 +569,7 @@[m [mcontract TimeBondDepository is Ownable {[m
+     /**[m
+      *  @notice initializes bond parameters[m
+      *  @param _controlVariable uint[m
+[31m-     *  @param _vestingTerm uint[m
+[32m+[m[32m     *  @param _vestingTerm uint32[m
+      *  @param _minimumPrice uint[m
+      *  @param _maxPayout uint[m
+      *  @param _maxDebt uint[m
+[36m@@ -552,19 +580,20 @@[m [mcontract TimeBondDepository is Ownable {[m
+         uint _maxPayout,[m
+         uint _maxDebt,[m
+         uint32 _vestingTerm[m
+[31m-    ) external onlyPolicy() {[m
+[31m-        require( currentDebt() == 0, "Debt must be 0 for initialization" );[m
+[32m+[m[32m    ) external onlyOwner() {[m
+[32m+[m[32m        require( terms.controlVariable == 0, "Bonds must be initialized from 0" );[m
+         require( _controlVariable >= 40, "Can lock adjustment" );[m
+         require( _maxPayout <= 1000, "Payout cannot be above 1 percent" );[m
+         require( _vestingTerm >= 129600, "Vesting must be longer than 36 hours" );[m
+         terms = Terms ({[m
+             controlVariable: _controlVariable,[m
+[31m-            vestingTerm: _vestingTerm,[m
+             minimumPrice: _minimumPrice,[m
+             maxPayout: _maxPayout,[m
+[31m-            maxDebt: _maxDebt[m
+[32m+[m[32m            maxDebt: _maxDebt,[m
+[32m+[m[32m            vestingTerm: _vestingTerm[m
+         });[m
+         lastDecay = uint32(block.timestamp);[m
+[32m+[m[32m        emit InitTerms(terms);[m
+     }[m
+ [m
+ [m
+[36m@@ -572,13 +601,13 @@[m [mcontract TimeBondDepository is Ownable {[m
+     [m
+     /* ======== POLICY FUNCTIONS ======== */[m
+ [m
+[31m-    enum PARAMETER { VESTING, PAYOUT, DEBT, MINPRICE }[m
+[32m+[m[32m    enum PARAMETER { VESTING, PAYOUT, FEE, DEBT, MINPRICE }[m
+     /**[m
+      *  @notice set parameters for new bonds[m
+      *  @param _parameter PARAMETER[m
+      *  @param _input uint[m
+      */[m
+[31m-    function setBondTerms ( PARAMETER _parameter, uint _input ) external onlyPolicy() {[m
+[32m+[m[32m    function setBondTerms ( PARAMETER _parameter, uint _input ) external onlyOwner() {[m
+         if ( _parameter == PARAMETER.VESTING ) { // 0[m
+             require( _input >= 129600, "Vesting must be longer than 36 hours" );[m
+             terms.vestingTerm = uint32(_input);[m
+[36m@@ -590,6 +619,7 @@[m [mcontract TimeBondDepository is Ownable {[m
+         } else if ( _parameter == PARAMETER.MINPRICE ) { // 3[m
+             terms.minimumPrice = _input;[m
+         }[m
+[32m+[m[32m        emit LogSetTerms(_parameter, _input);[m
+     }[m
+ [m
+     /**[m
+[36m@@ -604,8 +634,8 @@[m [mcontract TimeBondDepository is Ownable {[m
+         uint _increment, [m
+         uint _target,[m
+         uint32 _buffer [m
+[31m-    ) external onlyPolicy() {[m
+[31m-        require( _increment <= terms.controlVariable.mul( 25 )/ 1000, "Increment too large" );[m
+[32m+[m[32m    ) external onlyOwner() {[m
+[32m+[m[32m        require( _increment <= terms.controlVariable.mul( 25 ) / 1000 , "Increment too large" );[m
+         require(_target >= 40, "Next Adjustment could be locked");[m
+         adjustment = Adjust({[m
+             add: _addition,[m
+[36m@@ -614,6 +644,7 @@[m [mcontract TimeBondDepository is Ownable {[m
+             buffer: _buffer,[m
+             lastTime: uint32(block.timestamp)[m
+         });[m
+[32m+[m[32m        emit LogSetAdjustment(adjustment);[m
+     }[m
+ [m
+     /**[m
+[36m@@ -621,8 +652,8 @@[m [mcontract TimeBondDepository is Ownable {[m
+      *  @param _staking address[m
+      *  @param _helper bool[m
+      */[m
+[31m-    function setStaking( address _staking, bool _helper ) external onlyPolicy() {[m
+[31m-        require( _staking != address(0) , "IA");[m
+[32m+[m[32m    function setStaking( address _staking, bool _helper ) external onlyOwner() {[m
+[32m+[m[32m        require( _staking != address(0), "IA" );[m
+         if ( _helper ) {[m
+             useHelper = true;[m
+             stakingHelper = IStakingHelper(_staking);[m
+[36m@@ -630,15 +661,16 @@[m [mcontract TimeBondDepository is Ownable {[m
+             useHelper = false;[m
+             staking = IStaking(_staking);[m
+         }[m
+[32m+[m[32m        emit LogSetStaking(_staking, _helper);[m
+     }[m
+ [m
+[31m-    function allowZapper(address zapper) external onlyPolicy {[m
+[32m+[m[32m    function allowZapper(address zapper) external onlyOwner {[m
+         require(zapper != address(0), "ZNA");[m
+         [m
+         allowedZappers[zapper] = true;[m
+     }[m
+ [m
+[31m-    function removeZapper(address zapper) external onlyPolicy {[m
+[32m+[m[32m    function removeZapper(address zapper) external onlyOwner {[m
+        [m
+         allowedZappers[zapper] = false;[m
+     }[m
+[36m@@ -659,41 +691,29 @@[m [mcontract TimeBondDepository is Ownable {[m
+         uint _amount, [m
+         uint _maxPrice,[m
+         address _depositor[m
+[31m-    ) external payable returns ( uint ) {[m
+[32m+[m[32m    ) external returns ( uint ) {[m
+         require( _depositor != address(0), "Invalid address" );[m
+         require(msg.sender == _depositor || allowedZappers[msg.sender], "LFNA");[m
+         decayDebt();[m
+[31m-        require( totalDebt <= terms.maxDebt, "Max capacity reached" );[m
+[31m-        [m
+[32m+[m
+         uint priceInUSD = bondPriceInUSD(); // Stored in bond info[m
+         uint nativePrice = _bondPrice();[m
+ [m
+         require( _maxPrice >= nativePrice, "Slippage limit: more than max price" ); // slippage protection[m
+ [m
+[31m-        uint value = treasury.valueOf( address(principle), _amount );[m
+[32m+[m[32m        uint value = treasury.valueOfToken( address(principle), _amount );[m
+         uint payout = payoutFor( value ); // payout to bonder is computed[m
+[31m-[m
+[32m+[m[32m        require( totalDebt.add(value) <= terms.maxDebt, "Max capacity reached" );[m
+         require( payout >= 10000000, "Bond too small" ); // must be > 0.01 Time ( underflow protection )[m
+         require( payout <= maxPayout(), "Bond too large"); // size protection because there is no slippage[m
+ [m
+[31m-        /**[m
+[31m-            asset carries risk and is not minted against[m
+[31m-            asset transfered to treasury and rewards minted as payout[m
+[31m-         */[m
+[31m-        if (address(this).balance >= _amount) {[m
+[31m-            // pay with WETH9[m
+[31m-            require(msg.value == _amount, "UA");[m
+[31m-            principle.deposit{value: _amount}(); // wrap only what is needed to pay[m
+[31m-            principle.transfer(address(treasury), _amount);[m
+[31m-        } else {[m
+[31m-            principle.safeTransferFrom( msg.sender, address(treasury), _amount );[m
+[31m-        }[m
+[31m-        [m
+[32m+[m[32m        principle.safeTransferFrom( msg.sender, address(treasury), _amount );[m
+[32m+[m
+         treasury.mintRewards( address(this), payout );[m
+         [m
+         // total debt is increased[m
+         totalDebt = totalDebt.add( value ); [m
+[31m-                [m
+[32m+[m[41m            [m
+         // depositor info is stored[m
+         bondInfo[ _depositor ] = Bond({ [m
+             payout: bondInfo[ _depositor ].payout.add( payout ),[m
+[36m@@ -716,10 +736,11 @@[m [mcontract TimeBondDepository is Ownable {[m
+      *  @param _stake bool[m
+      *  @return uint[m
+      */ [m
+[31m-    function redeem( address _recipient, bool _stake ) external returns ( uint ) { [m
+[31m-        require(msg.sender == _recipient, "NA");       [m
+[32m+[m[32m    function redeem( address _recipient, bool _stake ) external returns ( uint ) {[m
+[32m+[m[32m        require(msg.sender == _recipient, "NA");[m[41m     [m
+         Bond memory info = bondInfo[ _recipient ];[m
+[31m-        uint percentVested = percentVestedFor( _recipient ); // (seconds since last interaction / vesting term remaining)[m
+[32m+[m[32m        // (seconds since last interaction / vesting term remaining)[m
+[32m+[m[32m        uint percentVested = percentVestedFor( _recipient );[m
+ [m
+         if ( percentVested >= 10000 ) { // if fully vested[m
+             delete bondInfo[ _recipient ]; // delete user info[m
+[36m@@ -728,13 +749,12 @@[m [mcontract TimeBondDepository is Ownable {[m
+ [m
+         } else { // if unfinished[m
+             // calculate payout vested[m
+[31m-            uint payout = info.payout.mul( percentVested )/ 10000;[m
+[31m-[m
+[32m+[m[32m            uint payout = info.payout.mul( percentVested ) / 10000 ;[m
+             // store updated deposit info[m
+             bondInfo[ _recipient ] = Bond({[m
+                 payout: info.payout.sub( payout ),[m
+                 vesting: info.vesting.sub32( uint32( block.timestamp ).sub32( info.lastTime ) ),[m
+[31m-                lastTime: uint32( block.timestamp ),[m
+[32m+[m[32m                lastTime: uint32(block.timestamp),[m
+                 pricePaid: info.pricePaid[m
+             });[m
+ [m
+[36m@@ -773,22 +793,26 @@[m [mcontract TimeBondDepository is Ownable {[m
+      *  @notice makes incremental adjustment to control variable[m
+      */[m
+     function adjust() internal {[m
+[31m-         uint timeCanAdjust = adjustment.lastTime.add32( adjustment.buffer );[m
+[31m-         if( adjustment.rate != 0 && block.timestamp >= timeCanAdjust ) {[m
+[32m+[m[32m        uint timeCanAdjust = adjustment.lastTime.add32( adjustment.buffer );[m
+[32m+[m[32m        if( adjustment.rate != 0 && block.timestamp >= timeCanAdjust ) {[m
+             uint initial = terms.controlVariable;[m
+[32m+[m[32m            uint bcv = initial;[m
+             if ( adjustment.add ) {[m
+[31m-                terms.controlVariable = terms.controlVariable.add( adjustment.rate );[m
+[31m-                if ( terms.controlVariable >= adjustment.target ) {[m
+[32m+[m[32m                bcv = bcv.add(adjustment.rate);[m
+[32m+[m[32m                if ( bcv >= adjustment.target ) {[m
+                     adjustment.rate = 0;[m
+[32m+[m[32m                    bcv = adjustment.target;[m
+                 }[m
+             } else {[m
+[31m-                terms.controlVariable = terms.controlVariable.sub( adjustment.rate );[m
+[31m-                if ( terms.controlVariable <= adjustment.target ) {[m
+[32m+[m[32m                bcv = bcv.sub(adjustment.rate);[m
+[32m+[m[32m                if ( bcv <= adjustment.target ) {[m
+                     adjustment.rate = 0;[m
+[32m+[m[32m                    bcv = adjustment.target;[m
+                 }[m
+             }[m
+[32m+[m[32m            terms.controlVariable = bcv;[m
+             adjustment.lastTime = uint32(block.timestamp);[m
+[31m-            emit ControlVariableAdjustment( initial, terms.controlVariable, adjustment.rate, adjustment.add );[m
+[32m+[m[32m            emit ControlVariableAdjustment( initial, bcv, adjustment.rate, adjustment.add );[m
+         }[m
+     }[m
+ [m
+[36m@@ -810,7 +834,7 @@[m [mcontract TimeBondDepository is Ownable {[m
+      *  @return uint[m
+      */[m
+     function maxPayout() public view returns ( uint ) {[m
+[31m-        return Time.totalSupply().mul( terms.maxPayout )/ 100000;[m
+[32m+[m[32m        return Time.totalSupply().mul( terms.maxPayout ) / 100000 ;[m
+     }[m
+ [m
+     /**[m
+[36m@@ -819,7 +843,7 @@[m [mcontract TimeBondDepository is Ownable {[m
+      *  @return uint[m
+      */[m
+     function payoutFor( uint _value ) public view returns ( uint ) {[m
+[31m-        return FixedPoint.fraction( _value, bondPrice() ).decode112with18()/ 1e14;[m
+[32m+[m[32m        return FixedPoint.fraction( _value, bondPrice() ).decode112with18() / 1e16 ;[m
+     }[m
+ [m
+ [m
+[36m@@ -828,7 +852,7 @@[m [mcontract TimeBondDepository is Ownable {[m
+      *  @return price_ uint[m
+      */[m
+     function bondPrice() public view returns ( uint price_ ) {        [m
+[31m-        price_ = terms.controlVariable.mul( debtRatio() )/ 1e5;[m
+[32m+[m[32m        price_ = terms.controlVariable.mul( debtRatio() ).add( 1000000000 ) / 1e7;[m
+         if ( price_ < terms.minimumPrice ) {[m
+             price_ = terms.minimumPrice;[m
+         }[m
+[36m@@ -873,10 +897,10 @@[m [mcontract TimeBondDepository is Ownable {[m
+         debtRatio_ = FixedPoint.fraction( [m
+             currentDebt().mul( 1e9 ), [m
+             supply[m
+[31m-        ).decode112with18()/ 1e18;[m
+[32m+[m[32m        ).decode112with18() / 1e18;[m
+     }[m
+ [m
+[31m-    /**[m
+[32m+[m[32m   /**[m
+      *  @notice debt ratio in same terms as reserve bonds[m
+      *  @return uint[m
+      */[m
+[36m@@ -898,7 +922,7 @@[m [mcontract TimeBondDepository is Ownable {[m
+      */[m
+     function debtDecay() public view returns ( uint decay_ ) {[m
+         uint32 timeSinceLast = uint32(block.timestamp).sub32( lastDecay );[m
+[31m-        decay_ = totalDebt.mul( timeSinceLast )/ terms.vestingTerm;[m
+[32m+[m[32m        decay_ = (totalDebt.mul( timeSinceLast )).div(terms.vestingTerm);[m
+         if ( decay_ > totalDebt ) {[m
+             decay_ = totalDebt;[m
+         }[m
+[36m@@ -916,7 +940,7 @@[m [mcontract TimeBondDepository is Ownable {[m
+         uint vesting = bond.vesting;[m
+ [m
+         if ( vesting > 0 ) {[m
+[31m-            percentVested_ = secondsSinceLast.mul( 10000 )/vesting;[m
+[32m+[m[32m            percentVested_ = secondsSinceLast.mul( 10000 ) / vesting;[m
+         } else {[m
+             percentVested_ = 0;[m
+         }[m
+[36m@@ -934,7 +958,7 @@[m [mcontract TimeBondDepository is Ownable {[m
+         if ( percentVested >= 10000 ) {[m
+             pendingPayout_ = payout;[m
+         } else {[m
+[31m-            pendingPayout_ = payout.mul( percentVested )/ 10000;[m
+[32m+[m[32m            pendingPayout_ = payout.mul( percentVested ) / 10000;[m
+         }[m
+     }[m
+ [m
+[36m@@ -947,10 +971,12 @@[m [mcontract TimeBondDepository is Ownable {[m
+      *  @notice allow anyone to send lost tokens (excluding principle or Time) to the DAO[m
+      *  @return bool[m
+      */[m
+[31m-    function recoverLostToken( IERC20 _token ) external returns ( bool ) {[m
+[32m+[m[32m    function recoverLostToken(IERC20 _token ) external returns ( bool ) {[m
+         require( _token != Time, "NAT" );[m
+         require( _token != principle, "NAP" );[m
+[31m-        _token.safeTransfer( DAO, _token.balanceOf( address(this) ) );[m
+[32m+[m[32m        uint balance = _token.balanceOf( address(this));[m
+[32m+[m[32m        _token.safeTransfer( DAO,  balance );[m
+[32m+[m[32m        emit LogRecoverLostToken(address(_token), balance);[m
+         return true;[m
+     }[m
+ [m
+[1mdiff --git a/Treasury.sol b/Treasury.sol[m
+[1mindex b336043..35cf365 100644[m
+[1m--- a/Treasury.sol[m
+[1m+++ b/Treasury.sol[m
+[36m@@ -311,11 +311,6 @@[m [mcontract TimeTreasury is Ownable {[m
+     mapping( address => bool ) public isRewardManager;[m
+     mapping( address => uint32 ) public rewardManagerQueue; // Delays changes to mapping.[m
+ [m
+[31m-    mapping( address => uint256 ) public hourlyLimitAmounts; // tracks amounts[m
+[31m-    mapping( address => uint32 ) public hourlyLimitQueue; // Delays changes to mapping.[m
+[31m-[m
+[31m-    uint256 public limitAmount;[m
+[31m-[m
+     IERC20 public MEMOries;[m
+     uint public sOHMQueue; // Delays change to sOHM address[m
+     [m
+[36m@@ -325,8 +320,7 @@[m [mcontract TimeTreasury is Ownable {[m
+     constructor ([m
+         address _Time,[m
+         address _MIM,[m
+[31m-        uint32 _secondsNeededForQueue,[m
+[31m-        uint256 _limitAmount[m
+[32m+[m[32m        uint32 _secondsNeededForQueue[m
+     ) {[m
+         require( _Time != address(0) );[m
+         Time = ITIMEERC20(_Time);[m
+[36m@@ -338,12 +332,6 @@[m [mcontract TimeTreasury is Ownable {[m
+     //    liquidityTokens.push( _OHMDAI );[m
+ [m
+         secondsNeededForQueue = _secondsNeededForQueue;[m
+[31m-        limitAmount = _limitAmount;[m
+[31m-    }[m
+[31m-[m
+[31m-    function setLimitAmount(uint amount) external onlyOwner {[m
+[31m-        limitAmount = amount;[m
+[31m-        emit ChangeLimitAmount(limitAmount);[m
+     }[m
+ [m
+     /**[m
+[36m@@ -363,10 +351,9 @@[m [mcontract TimeTreasury is Ownable {[m
+             require( isLiquidityDepositor[ msg.sender ], "Not approved" );[m
+         }[m
+ [m
+[31m-        uint value = valueOf(_token, _amount);[m
+[32m+[m[32m        uint value = valueOfToken(_token, _amount);[m
+         // mint Time needed and store amount of rewards for distribution[m
+         send_ = value.sub( _profit );[m
+[31m-        limitRequirements(msg.sender, send_);[m
+         Time.mint( msg.sender, send_ );[m
+ [m
+         totalReserves = totalReserves.add( value );[m
+[36m@@ -384,7 +371,7 @@[m [mcontract TimeTreasury is Ownable {[m
+         require( isReserveToken[ _token ], "Not accepted" ); // Only reserves can be used for redemptions[m
+         require( isReserveSpender[ msg.sender ], "Not approved" );[m
+ [m
+[31m-        uint value = valueOf( _token, _amount );[m
+[32m+[m[32m        uint value = valueOfToken( _token, _amount );[m
+         Time.burnFrom( msg.sender, value );[m
+ [m
+         totalReserves = totalReserves.sub( value );[m
+[36m@@ -404,13 +391,12 @@[m [mcontract TimeTreasury is Ownable {[m
+         require( isDebtor[ msg.sender ], "Not approved" );[m
+         require( isReserveToken[ _token ], "Not accepted" );[m
+ [m
+[31m-        uint value = valueOf( _token, _amount );[m
+[32m+[m[32m        uint value = valueOfToken( _token, _amount );[m
+ [m
+         uint maximumDebt = MEMOries.balanceOf( msg.sender ); // Can only borrow against sOHM held[m
+         uint balance = debtorBalance[ msg.sender ];[m
+         uint availableDebt = maximumDebt.sub( balance );[m
+         require( value <= availableDebt, "Exceeds debt limit" );[m
+[31m-        limitRequirements(msg.sender, value);[m
+         debtorBalance[ msg.sender ] = balance.add( value );[m
+         totalDebt = totalDebt.add( value );[m
+ [m
+[36m@@ -433,7 +419,7 @@[m [mcontract TimeTreasury is Ownable {[m
+ [m
+         IERC20( _token ).safeTransferFrom( msg.sender, address(this), _amount );[m
+ [m
+[31m-        uint value = valueOf( _token, _amount );[m
+[32m+[m[32m        uint value = valueOfToken( _token, _amount );[m
+         debtorBalance[ msg.sender ] = debtorBalance[ msg.sender ].sub( value );[m
+         totalDebt = totalDebt.sub( value );[m
+ [m
+[36m@@ -465,7 +451,7 @@[m [mcontract TimeTreasury is Ownable {[m
+         @param _amount uint[m
+      */[m
+     function manage( address _token, uint _amount ) external {[m
+[31m-        uint value = valueOf(_token, _amount);[m
+[32m+[m[32m        uint value = valueOfToken(_token, _amount);[m
+         if( isLiquidityToken[ _token ] ) {[m
+             require( isLiquidityManager[ msg.sender ], "Not approved" );[m
+             require(value <= excessReserves());[m
+[36m@@ -474,7 +460,6 @@[m [mcontract TimeTreasury is Ownable {[m
+             require( isReserveManager[ msg.sender ], "Not approved" );[m
+         }[m
+         [m
+[31m-        limitRequirements(msg.sender, value);[m
+         totalReserves = totalReserves.sub( value );[m
+         emit ReservesUpdated( totalReserves );[m
+ [m
+[36m@@ -489,7 +474,6 @@[m [mcontract TimeTreasury is Ownable {[m
+     function mintRewards( address _recipient, uint _amount ) external {[m
+         require( isRewardManager[ msg.sender ], "Not approved" );[m
+         require( _amount <= excessReserves(), "Insufficient reserves" );[m
+[31m-        limitRequirements(msg.sender, _amount);[m
+         Time.mint( _recipient, _amount );[m
+ [m
+         emit RewardsMinted( msg.sender, _recipient, _amount );[m
+[36m@@ -511,12 +495,12 @@[m [mcontract TimeTreasury is Ownable {[m
+         uint reserves;[m
+         for( uint i = 0; i < reserveTokens.length; i++ ) {[m
+             reserves = reserves.add ( [m
+[31m-                valueOf( reserveTokens[ i ], IERC20( reserveTokens[ i ] ).balanceOf( address(this) ) )[m
+[32m+[m[32m                valueOfToken( reserveTokens[ i ], IERC20( reserveTokens[ i ] ).balanceOf( address(this) ) )[m
+             );[m
+         }[m
+         for( uint i = 0; i < liquidityTokens.length; i++ ) {[m
+             reserves = reserves.add ([m
+[31m-                valueOf( liquidityTokens[ i ], IERC20( liquidityTokens[ i ] ).balanceOf( address(this) ) )[m
+[32m+[m[32m                valueOfToken( liquidityTokens[ i ], IERC20( liquidityTokens[ i ] ).balanceOf( address(this) ) )[m
+             );[m
+         }[m
+         totalReserves = reserves;[m
+[36m@@ -530,7 +514,7 @@[m [mcontract TimeTreasury is Ownable {[m
+         @param _amount uint[m
+         @return value_ uint[m
+      */[m
+[31m-    function valueOf( address _token, uint _amount ) public view returns ( uint value_ ) {[m
+[32m+[m[32m    function valueOfToken( address _token, uint _amount ) public view returns ( uint value_ ) {[m
+         if ( isReserveToken[ _token ] ) {[m
+             // convert amount to match Time decimals[m
+             value_ = _amount.mul( 10 ** Time.decimals() ).div( 10 ** IERC20( _token ).decimals() );[m
+[36m@@ -712,23 +696,6 @@[m [mcontract TimeTreasury is Ownable {[m
+         } return false;[m
+     }[m
+ [m
+[31m-    /**[m
+[31m-        @notice checks LimitRequirements[m
+[31m-        @param _address address[m
+[31m-        @param _address value[m
+[31m-     */[m
+[31m-    function limitRequirements( [m
+[31m-        address _address,[m
+[31m-        uint256 value[m
+[31m-    ) internal {[m
+[31m-        if (block.timestamp.sub(hourlyLimitQueue[_address]) >= 1 hours)[m
+[31m-        {[m
+[31m-            hourlyLimitAmounts[_address] = limitAmount;[m
+[31m-            hourlyLimitQueue[_address] = uint32(block.timestamp);[m
+[31m-        }[m
+[31m-        hourlyLimitAmounts[_address] = hourlyLimitAmounts[_address].sub(value);[m
+[31m-    }[m
+[31m-[m
+     /**[m
+         @notice checks array to ensure against duplicate[m
+         @param _list address[][m
+[1mdiff --git a/WEthBondDepository.sol b/WEthBondDepository.sol[m
+[1mindex d271f80..c762074 100644[m
+[1m--- a/WEthBondDepository.sol[m
+[1m+++ b/WEthBondDepository.sol[m
+[36m@@ -1,5 +1,6 @@[m
+ // SPDX-License-Identifier: AGPL-3.0-or-later[m
+ pragma solidity 0.7.5;[m
+[32m+[m[32mpragma abicoder v2;[m
+ [m
+ interface IOwnable {[m
+   function policy() external view returns (address);[m
+[36m@@ -11,43 +12,61 @@[m [minterface IOwnable {[m
+   function pullManagement() external;[m
+ }[m
+ [m
+[31m-contract Ownable is IOwnable {[m
+[31m-[m
+[31m-    address internal _owner;[m
+[31m-    address internal _newOwner;[m
+[31m-[m
+[31m-    event OwnershipPushed(address indexed previousOwner, address indexed newOwner);[m
+[31m-    event OwnershipPulled(address indexed previousOwner, address indexed newOwner);[m
+[32m+[m[32mcontract OwnableData {[m
+[32m+[m[32m    address public owner;[m
+[32m+[m[32m    address public pendingOwner;[m
+[32m+[m[32m}[m
+ [m
+[31m-    constructor () {[m
+[31m-        _owner = msg.sender;[m
+[31m-        emit OwnershipPushed( address(0), _owner );[m
+[32m+[m[32mcontract Ownable is OwnableData {[m
+[32m+[m[32m    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);[m
+[32m+[m
+[32m+[m[32m    /// @notice `owner` defaults to msg.sender on construction.[m
+[32m+[m[32m    constructor() {[m
+[32m+[m[32m        owner = msg.sender;[m
+[32m+[m[32m        emit OwnershipTransferred(address(0), msg.sender);[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /// @notice Transfers ownership to `newOwner`. Either directly or claimable by the new pending owner.[m
+[32m+[m[32m    /// Can only be invoked by the current `owner`.[m
+[32m+[m[32m    /// @param newOwner Address of the new owner.[m
+[32m+[m[32m    /// @param direct True if `newOwner` should be set immediately. False if `newOwner` needs to use `claimOwnership`.[m
+[32m+[m[32m    /// @param renounce Allows the `newOwner` to be `address(0)` if `direct` and `renounce` is True. Has no effect otherwise.[m
+[32m+[m[32m    function transferOwnership([m
+[32m+[m[32m        address newOwner,[m
+[32m+[m[32m        bool direct,[m
+[32m+[m[32m        bool renounce[m
+[32m+[m[32m    ) public onlyOwner {[m
+[32m+[m[32m        if (direct) {[m
+[32m+[m[32m            // Checks[m
+[32m+[m[32m            require(newOwner != address(0) || renounce, "Ownable: zero address");[m
+[32m+[m
+[32m+[m[32m            // Effects[m
+[32m+[m[32m            emit OwnershipTransferred(owner, newOwner);[m
+[32m+[m[32m            owner = newOwner;[m
+[32m+[m[32m            pendingOwner = address(0);[m
+[32m+[m[32m        } else {[m
+[32m+[m[32m            // Effects[m
+[32m+[m[32m            pendingOwner = newOwner;[m
+[32m+[m[32m        }[m
+     }[m
+ [m
+[31m-    function policy() public view override returns (address) {[m
+[31m-        return _owner;[m
+[31m-    }[m
+[32m+[m[32m    /// @notice Needs to be called by `pendingOwner` to claim ownership.[m
+[32m+[m[32m    function claimOwnership() public {[m
+[32m+[m[32m        address _pendingOwner = pendingOwner;[m
+ [m
+[31m-    modifier onlyPolicy() {[m
+[31m-        require( _owner == msg.sender, "Ownable: caller is not the owner" );[m
+[31m-        _;[m
+[31m-    }[m
+[32m+[m[32m        // Checks[m
+[32m+[m[32m        require(msg.sender == _pendingOwner, "Ownable: caller != pending owner");[m
+ [m
+[31m-    function renounceManagement() public virtual override onlyPolicy() {[m
+[31m-        emit OwnershipPushed( _owner, address(0) );[m
+[31m-        _owner = address(0);[m
+[32m+[m[32m        // Effects[m
+[32m+[m[32m        emit OwnershipTransferred(owner, _pendingOwner);[m
+[32m+[m[32m        owner = _pendingOwner;[m
+[32m+[m[32m        pendingOwner = address(0);[m
+     }[m
+ [m
+[31m-    function pushManagement( address newOwner_ ) public virtual override onlyPolicy() {[m
+[31m-        require( newOwner_ != address(0), "Ownable: new owner is the zero address");[m
+[31m-        emit OwnershipPushed( _owner, newOwner_ );[m
+[31m-        _newOwner = newOwner_;[m
+[31m-    }[m
+[31m-    [m
+[31m-    function pullManagement() public virtual override {[m
+[31m-        require( msg.sender == _newOwner, "Ownable: must be new owner to pull");[m
+[31m-        emit OwnershipPulled( _owner, _newOwner );[m
+[31m-        _owner = _newOwner;[m
+[32m+[m[32m    /// @notice Only allows the `owner` to execute the function.[m
+[32m+[m[32m    modifier onlyOwner() {[m
+[32m+[m[32m        require(msg.sender == owner, "Ownable: caller is not the owner");[m
+[32m+[m[32m        _;[m
+     }[m
+ }[m
+ [m
+[36m@@ -99,6 +118,11 @@[m [mlibrary LowGasSafeMath {[m
+     function sub(int256 x, int256 y) internal pure returns (int256 z) {[m
+         require((z = x - y) <= x == (y >= 0));[m
+     }[m
+[32m+[m
+[32m+[m[32m    function div(uint256 x, uint256 y) internal pure returns(uint256 z){[m
+[32m+[m[32m        require(y > 0);[m
+[32m+[m[32m        z=x/y;[m
+[32m+[m[32m    }[m
+ }[m
+ [m
+ library Address {[m
+[36m@@ -246,7 +270,6 @@[m [mlibrary Address {[m
+ [m
+     }[m
+ }[m
+[31m-[m
+ interface IERC20 {[m
+     function decimals() external view returns (uint8);[m
+ [m
+[36m@@ -391,43 +414,17 @@[m [mlibrary FixedPoint {[m
+     }[m
+ }[m
+ [m
+[31m-interface AggregatorV3Interface {[m
+[31m-[m
+[31m-  function decimals() external view returns (uint8);[m
+[31m-  function description() external view returns (string memory);[m
+[31m-  function version() external view returns (uint256);[m
+[31m-[m
+[31m-  // getRoundData and latestRoundData should both raise "No data present"[m
+[31m-  // if they do not have data to report, instead of returning unset values[m
+[31m-  // which could be misinterpreted as actual reported values.[m
+[31m-  function getRoundData(uint80 _roundId)[m
+[31m-    external[m
+[31m-    view[m
+[31m-    returns ([m
+[31m-      uint80 roundId,[m
+[31m-      int256 answer,[m
+[31m-      uint256 startedAt,[m
+[31m-      uint256 updatedAt,[m
+[31m-      uint80 answeredInRound[m
+[31m-    );[m
+[31m-  function latestRoundData()[m
+[31m-    external[m
+[31m-    view[m
+[31m-    returns ([m
+[31m-      uint80 roundId,[m
+[31m-      int256 answer,[m
+[31m-      uint256 startedAt,[m
+[31m-      uint256 updatedAt,[m
+[31m-      uint80 answeredInRound[m
+[31m-    );[m
+[31m-}[m
+[31m-[m
+ interface ITreasury {[m
+[31m-    function deposit( uint _amount, address _token, uint _profit ) external returns ( bool );[m
+[31m-    function valueOf( address _token, uint _amount ) external view returns ( uint value_ );[m
+[32m+[m[32m    function deposit( uint _amount, address _token, uint _profit ) external returns ( uint );[m
+[32m+[m[32m    function valueOfToken( address _token, uint _amount ) external view returns ( uint value_ );[m
+     function mintRewards( address _recipient, uint _amount ) external;[m
+ }[m
+ [m
+[32m+[m[32minterface IBondCalculator {[m
+[32m+[m[32m    function valuation( address _LP, uint _amount ) external view returns ( uint );[m
+[32m+[m[32m    function markdown( address _LP ) external view returns ( uint );[m
+[32m+[m[32m}[m
+[32m+[m
+ interface IStaking {[m
+     function stake( uint _amount, address _recipient ) external returns ( bool );[m
+ }[m
+[36m@@ -436,16 +433,10 @@[m [minterface IStakingHelper {[m
+     function stake( uint _amount, address _recipient ) external;[m
+ }[m
+ [m
+[31m-interface IWAVAX9 is IERC20 {[m
+[31m-    /// @notice Deposit ether to get wrapped ether[m
+[31m-    function deposit() external payable;[m
+[31m-}[m
+[31m-[m
+[31m-contract TimeBondDepository is Ownable {[m
+[32m+[m[32mcontract MaiaBondDepository is Ownable {[m
+ [m
+     using FixedPoint for *;[m
+     using SafeERC20 for IERC20;[m
+[31m-    using SafeERC20 for IWAVAX9;[m
+     using LowGasSafeMath for uint;[m
+     using LowGasSafeMath for uint32;[m
+ [m
+[36m@@ -458,17 +449,23 @@[m [mcontract TimeBondDepository is Ownable {[m
+     event BondRedeemed( address indexed recipient, uint payout, uint remaining );[m
+     event BondPriceChanged( uint indexed priceInUSD, uint indexed internalPrice, uint indexed debtRatio );[m
+     event ControlVariableAdjustment( uint initialBCV, uint newBCV, uint adjustment, bool addition );[m
+[31m-[m
+[32m+[m[32m    event InitTerms( Terms terms);[m
+[32m+[m[32m    event LogSetTerms(PARAMETER param, uint value);[m
+[32m+[m[32m    event LogSetAdjustment( Adjust adjust);[m
+[32m+[m[32m    event LogSetStaking( address indexed stakingContract, bool isHelper);[m
+[32m+[m[32m    event LogRecoverLostToken( address indexed tokenToRecover, uint amount);[m
+ [m
+ [m
+ [m
+     /* ======== STATE VARIABLES ======== */[m
+[32m+[m
+     IERC20 public immutable Time; // token given as payment for bond[m
+[31m-    IWAVAX9 public immutable principle; // token used to create bond[m
+[32m+[m[32m    IERC20 public immutable principle; // token used to create bond[m
+     ITreasury public immutable treasury; // mints Time when receives principle[m
+     address public immutable DAO; // receives profit share from bond[m
+ [m
+[31m-    AggregatorV3Interface public priceFeed;[m
+[32m+[m[32m    bool public immutable isLiquidityBond; // LP and Reserve bonds are treated slightly different[m
+[32m+[m[32m    IBondCalculator public immutable bondCalculator; // calculates value of LP tokens[m
+ [m
+     IStaking public staking; // to auto-stake payout[m
+     IStakingHelper public stakingHelper; // to stake and claim if no staking warmup[m
+[36m@@ -482,17 +479,19 @@[m [mcontract TimeBondDepository is Ownable {[m
+     uint public totalDebt; // total value of outstanding bonds; used for pricing[m
+     uint32 public lastDecay; // reference time for debt decay[m
+ [m
+[31m-[m
+     mapping (address => bool) public allowedZappers;[m
+ [m
+ [m
+[32m+[m
+[32m+[m
+     /* ======== STRUCTS ======== */[m
+ [m
+     // Info for creating new bonds[m
+     struct Terms {[m
+         uint controlVariable; // scaling variable for price[m
+[31m-        uint minimumPrice; // vs principle value. 4 decimals (1500 = 0.15)[m
+[32m+[m[32m        uint minimumPrice; // vs principle value[m
+         uint maxPayout; // in thousandths of a %. i.e. 500 = 0.5%[m
+[32m+[m[32m        uint fee; // as % of bond payout, in hundreths. ( 500 = 5% = 0.05 for every 1 paid)[m
+         uint maxDebt; // 9 decimal debt ratio, max % total supply created as debt[m
+         uint32 vestingTerm; // in seconds[m
+     }[m
+[36m@@ -501,8 +500,8 @@[m [mcontract TimeBondDepository is Ownable {[m
+     struct Bond {[m
+         uint payout; // Time remaining to be paid[m
+         uint pricePaid; // In DAI, for front end viewing[m
+[31m-        uint32 vesting; // Seconds left to vest[m
+         uint32 lastTime; // Last interaction[m
+[32m+[m[32m        uint32 vesting; // Seconds left to vest[m
+     }[m
+ [m
+     // Info for incremental adjustments to control variable [m
+[36m@@ -523,48 +522,54 @@[m [mcontract TimeBondDepository is Ownable {[m
+         address _Time,[m
+         address _principle,[m
+         address _treasury, [m
+[31m-        address _DAO,[m
+[31m-        address _feed[m
+[32m+[m[32m        address _DAO,[m[41m [m
+[32m+[m[32m        address _bondCalculator[m
+     ) {[m
+         require( _Time != address(0) );[m
+         Time = IERC20(_Time);[m
+         require( _principle != address(0) );[m
+[31m-        principle = IWAVAX9(_principle);[m
+[32m+[m[32m        principle = IERC20(_principle);[m
+         require( _treasury != address(0) );[m
+         treasury = ITreasury(_treasury);[m
+         require( _DAO != address(0) );[m
+         DAO = _DAO;[m
+[31m-        require( _feed != address(0) );[m
+[31m-        priceFeed = AggregatorV3Interface( _feed );[m
+[32m+[m[32m        // bondCalculator should be address(0) if not LP bond[m
+[32m+[m[32m        bondCalculator = IBondCalculator(_bondCalculator);[m
+[32m+[m[32m        isLiquidityBond = ( _bondCalculator != address(0) );[m
+     }[m
+ [m
+     /**[m
+      *  @notice initializes bond parameters[m
+      *  @param _controlVariable uint[m
+[31m-     *  @param _vestingTerm uint[m
+[32m+[m[32m     *  @param _vestingTerm uint32[m
+      *  @param _minimumPrice uint[m
+      *  @param _maxPayout uint[m
+[32m+[m[32m     *  @param _fee uint[m
+      *  @param _maxDebt uint[m
+      */[m
+     function initializeBondTerms( [m
+         uint _controlVariable, [m
+         uint _minimumPrice,[m
+         uint _maxPayout,[m
+[32m+[m[32m        uint _fee,[m
+         uint _maxDebt,[m
+         uint32 _vestingTerm[m
+[31m-    ) external onlyPolicy() {[m
+[31m-        require( currentDebt() == 0, "Debt must be 0 for initialization" );[m
+[32m+[m[32m    ) external onlyOwner() {[m
+[32m+[m[32m        require( terms.controlVariable == 0, "Bonds must be initialized from 0" );[m
+         require( _controlVariable >= 40, "Can lock adjustment" );[m
+[31m-        require( _maxPayout <= 1000, "Payout cannot be above 1 percent" );[m
+[32m+[m[32m        require( _maxPayout <= 2000, "Payout cannot be above 1 percent" );[m
+         require( _vestingTerm >= 129600, "Vesting must be longer than 36 hours" );[m
+[32m+[m[32m        require( _fee <= 10000, "DAO fee cannot exceed payout" );[m
+         terms = Terms ({[m
+             controlVariable: _controlVariable,[m
+[31m-            vestingTerm: _vestingTerm,[m
+             minimumPrice: _minimumPrice,[m
+             maxPayout: _maxPayout,[m
+[31m-            maxDebt: _maxDebt[m
+[32m+[m[32m            fee: _fee,[m
+[32m+[m[32m            maxDebt: _maxDebt,[m
+[32m+[m[32m            vestingTerm: _vestingTerm[m
+         });[m
+         lastDecay = uint32(block.timestamp);[m
+[32m+[m[32m        emit InitTerms(terms);[m
+     }[m
+ [m
+ [m
+[36m@@ -572,24 +577,28 @@[m [mcontract TimeBondDepository is Ownable {[m
+     [m
+     /* ======== POLICY FUNCTIONS ======== */[m
+ [m
+[31m-    enum PARAMETER { VESTING, PAYOUT, DEBT, MINPRICE }[m
+[32m+[m[32m    enum PARAMETER { VESTING, PAYOUT, FEE, DEBT, MINPRICE }[m
+     /**[m
+      *  @notice set parameters for new bonds[m
+      *  @param _parameter PARAMETER[m
+      *  @param _input uint[m
+      */[m
+[31m-    function setBondTerms ( PARAMETER _parameter, uint _input ) external onlyPolicy() {[m
+[32m+[m[32m    function setBondTerms ( PARAMETER _parameter, uint _input ) external onlyOwner() {[m
+         if ( _parameter == PARAMETER.VESTING ) { // 0[m
+             require( _input >= 129600, "Vesting must be longer than 36 hours" );[m
+             terms.vestingTerm = uint32(_input);[m
+         } else if ( _parameter == PARAMETER.PAYOUT ) { // 1[m
+[31m-            require( _input <= 1000, "Payout cannot be above 1 percent" );[m
+[32m+[m[32m            require( _input <= 2000, "Payout cannot be above 1 percent" );[m
+             terms.maxPayout = _input;[m
+[31m-        } else if ( _parameter == PARAMETER.DEBT ) { // 2[m
+[32m+[m[32m        } else if ( _parameter == PARAMETER.FEE ) { // 2[m
+[32m+[m[32m            require( _input <= 10000, "DAO fee cannot exceed payout" );[m
+[32m+[m[32m            terms.fee = _input;[m
+[32m+[m[32m        } else if ( _parameter == PARAMETER.DEBT ) { // 3[m
+             terms.maxDebt = _input;[m
+[31m-        } else if ( _parameter == PARAMETER.MINPRICE ) { // 3[m
+[32m+[m[32m        } else if ( _parameter == PARAMETER.MINPRICE ) { // 4[m
+             terms.minimumPrice = _input;[m
+         }[m
+[32m+[m[32m        emit LogSetTerms(_parameter, _input);[m
+     }[m
+ [m
+     /**[m
+[36m@@ -604,8 +613,8 @@[m [mcontract TimeBondDepository is Ownable {[m
+         uint _increment, [m
+         uint _target,[m
+         uint32 _buffer [m
+[31m-    ) external onlyPolicy() {[m
+[31m-        require( _increment <= terms.controlVariable.mul( 25 )/ 1000, "Increment too large" );[m
+[32m+[m[32m    ) external onlyOwner() {[m
+[32m+[m[32m        require( _increment <= terms.controlVariable.mul( 25 ) / 1000 , "Increment too large" );[m
+         require(_target >= 40, "Next Adjustment could be locked");[m
+         adjustment = Adjust({[m
+             add: _addition,[m
+[36m@@ -614,6 +623,7 @@[m [mcontract TimeBondDepository is Ownable {[m
+             buffer: _buffer,[m
+             lastTime: uint32(block.timestamp)[m
+         });[m
+[32m+[m[32m        emit LogSetAdjustment(adjustment);[m
+     }[m
+ [m
+     /**[m
+[36m@@ -621,8 +631,8 @@[m [mcontract TimeBondDepository is Ownable {[m
+      *  @param _staking address[m
+      *  @param _helper bool[m
+      */[m
+[31m-    function setStaking( address _staking, bool _helper ) external onlyPolicy() {[m
+[31m-        require( _staking != address(0) , "IA");[m
+[32m+[m[32m    function setStaking( address _staking, bool _helper ) external onlyOwner() {[m
+[32m+[m[32m        require( _staking != address(0), "IA" );[m
+         if ( _helper ) {[m
+             useHelper = true;[m
+             stakingHelper = IStakingHelper(_staking);[m
+[36m@@ -630,15 +640,16 @@[m [mcontract TimeBondDepository is Ownable {[m
+             useHelper = false;[m
+             staking = IStaking(_staking);[m
+         }[m
+[32m+[m[32m        emit LogSetStaking(_staking, _helper);[m
+     }[m
+ [m
+[31m-    function allowZapper(address zapper) external onlyPolicy {[m
+[32m+[m[32m    function allowZapper(address zapper) external onlyOwner {[m
+         require(zapper != address(0), "ZNA");[m
+         [m
+         allowedZappers[zapper] = true;[m
+     }[m
+ [m
+[31m-    function removeZapper(address zapper) external onlyPolicy {[m
+[32m+[m[32m    function removeZapper(address zapper) external onlyOwner {[m
+        [m
+         allowedZappers[zapper] = false;[m
+     }[m
+[36m@@ -659,41 +670,35 @@[m [mcontract TimeBondDepository is Ownable {[m
+         uint _amount, [m
+         uint _maxPrice,[m
+         address _depositor[m
+[31m-    ) external payable returns ( uint ) {[m
+[32m+[m[32m    ) external returns ( uint ) {[m
+         require( _depositor != address(0), "Invalid address" );[m
+         require(msg.sender == _depositor || allowedZappers[msg.sender], "LFNA");[m
+         decayDebt();[m
+[31m-        require( totalDebt <= terms.maxDebt, "Max capacity reached" );[m
+[31m-        [m
+[32m+[m
+         uint priceInUSD = bondPriceInUSD(); // Stored in bond info[m
+         uint nativePrice = _bondPrice();[m
+ [m
+         require( _maxPrice >= nativePrice, "Slippage limit: more than max price" ); // slippage protection[m
+ [m
+[31m-        uint value = treasury.valueOf( address(principle), _amount );[m
+[32m+[m[32m        uint value = treasury.valueOfToken( address(principle), _amount );[m
+         uint payout = payoutFor( value ); // payout to bonder is computed[m
+[31m-[m
+[32m+[m[32m        require( totalDebt.add(value) <= terms.maxDebt, "Max capacity reached" );[m
+         require( payout >= 10000000, "Bond too small" ); // must be > 0.01 Time ( underflow protection )[m
+         require( payout <= maxPayout(), "Bond too large"); // size protection because there is no slippage[m
+ [m
+         /**[m
+[31m-            asset carries risk and is not minted against[m
+[31m-            asset transfered to treasury and rewards minted as payout[m
+[32m+[m[32m            principle is transferred in[m
+[32m+[m[32m            approved and[m
+[32m+[m[32m            deposited into the treasury[m
+          */[m
+[31m-        if (address(this).balance >= _amount) {[m
+[31m-            // pay with WETH9[m
+[31m-            require(msg.value == _amount, "UA");[m
+[31m-            principle.deposit{value: _amount}(); // wrap only what is needed to pay[m
+[31m-            principle.transfer(address(treasury), _amount);[m
+[31m-        } else {[m
+[31m-            principle.safeTransferFrom( msg.sender, address(treasury), _amount );[m
+[31m-        }[m
+[31m-        [m
+[32m+[m[32m        principle.approve( address( treasury ), _amount );[m
+[32m+[m[32m        principle.safeTransferFrom( msg.sender, address(treasury), _amount );[m
+[32m+[m
+         treasury.mintRewards( address(this), payout );[m
+         [m
+         // total debt is increased[m
+         totalDebt = totalDebt.add( value ); [m
+[31m-                [m
+[32m+[m[41m               [m
+         // depositor info is stored[m
+         bondInfo[ _depositor ] = Bond({ [m
+             payout: bondInfo[ _depositor ].payout.add( payout ),[m
+[36m@@ -716,10 +721,11 @@[m [mcontract TimeBondDepository is Ownable {[m
+      *  @param _stake bool[m
+      *  @return uint[m
+      */ [m
+[31m-    function redeem( address _recipient, bool _stake ) external returns ( uint ) { [m
+[31m-        require(msg.sender == _recipient, "NA");       [m
+[32m+[m[32m    function redeem( address _recipient, bool _stake ) external returns ( uint ) {[m
+[32m+[m[32m        require(msg.sender == _recipient, "NA");[m[41m     [m
+         Bond memory info = bondInfo[ _recipient ];[m
+[31m-        uint percentVested = percentVestedFor( _recipient ); // (seconds since last interaction / vesting term remaining)[m
+[32m+[m[32m        // (seconds since last interaction / vesting term remaining)[m
+[32m+[m[32m        uint percentVested = percentVestedFor( _recipient );[m
+ [m
+         if ( percentVested >= 10000 ) { // if fully vested[m
+             delete bondInfo[ _recipient ]; // delete user info[m
+[36m@@ -728,13 +734,12 @@[m [mcontract TimeBondDepository is Ownable {[m
+ [m
+         } else { // if unfinished[m
+             // calculate payout vested[m
+[31m-            uint payout = info.payout.mul( percentVested )/ 10000;[m
+[31m-[m
+[32m+[m[32m            uint payout = info.payout.mul( percentVested ) / 10000 ;[m
+             // store updated deposit info[m
+             bondInfo[ _recipient ] = Bond({[m
+                 payout: info.payout.sub( payout ),[m
+                 vesting: info.vesting.sub32( uint32( block.timestamp ).sub32( info.lastTime ) ),[m
+[31m-                lastTime: uint32( block.timestamp ),[m
+[32m+[m[32m                lastTime: uint32(block.timestamp),[m
+                 pricePaid: info.pricePaid[m
+             });[m
+ [m
+[36m@@ -773,22 +778,26 @@[m [mcontract TimeBondDepository is Ownable {[m
+      *  @notice makes incremental adjustment to control variable[m
+      */[m
+     function adjust() internal {[m
+[31m-         uint timeCanAdjust = adjustment.lastTime.add32( adjustment.buffer );[m
+[31m-         if( adjustment.rate != 0 && block.timestamp >= timeCanAdjust ) {[m
+[32m+[m[32m        uint timeCanAdjust = adjustment.lastTime.add32( adjustment.buffer );[m
+[32m+[m[32m        if( adjustment.rate != 0 && block.timestamp >= timeCanAdjust ) {[m
+             uint initial = terms.controlVariable;[m
+[32m+[m[32m            uint bcv = initial;[m
+             if ( adjustment.add ) {[m
+[31m-                terms.controlVariable = terms.controlVariable.add( adjustment.rate );[m
+[31m-                if ( terms.controlVariable >= adjustment.target ) {[m
+[32m+[m[32m                bcv = bcv.add(adjustment.rate);[m
+[32m+[m[32m                if ( bcv >= adjustment.target ) {[m
+                     adjustment.rate = 0;[m
+[32m+[m[32m                    bcv = adjustment.target;[m
+                 }[m
+             } else {[m
+[31m-                terms.controlVariable = terms.controlVariable.sub( adjustment.rate );[m
+[31m-                if ( terms.controlVariable <= adjustment.target ) {[m
+[32m+[m[32m                bcv = bcv.sub(adjustment.rate);[m
+[32m+[m[32m                if ( bcv <= adjustment.target ) {[m
+                     adjustment.rate = 0;[m
+[32m+[m[32m                    bcv = adjustment.target;[m
+                 }[m
+             }[m
+[32m+[m[32m            terms.controlVariable = bcv;[m
+             adjustment.lastTime = uint32(block.timestamp);[m
+[31m-            emit ControlVariableAdjustment( initial, terms.controlVariable, adjustment.rate, adjustment.add );[m
+[32m+[m[32m            emit ControlVariableAdjustment( initial, bcv, adjustment.rate, adjustment.add );[m
+         }[m
+     }[m
+ [m
+[36m@@ -810,7 +819,7 @@[m [mcontract TimeBondDepository is Ownable {[m
+      *  @return uint[m
+      */[m
+     function maxPayout() public view returns ( uint ) {[m
+[31m-        return Time.totalSupply().mul( terms.maxPayout )/ 100000;[m
+[32m+[m[32m        return Time.totalSupply().mul( terms.maxPayout ) / 100000 ;[m
+     }[m
+ [m
+     /**[m
+[36m@@ -819,7 +828,7 @@[m [mcontract TimeBondDepository is Ownable {[m
+      *  @return uint[m
+      */[m
+     function payoutFor( uint _value ) public view returns ( uint ) {[m
+[31m-        return FixedPoint.fraction( _value, bondPrice() ).decode112with18()/ 1e14;[m
+[32m+[m[32m        return FixedPoint.fraction( _value, bondPrice() ).decode112with18() / 1e14 ;[m
+     }[m
+ [m
+ [m
+[36m@@ -828,7 +837,7 @@[m [mcontract TimeBondDepository is Ownable {[m
+      *  @return price_ uint[m
+      */[m
+     function bondPrice() public view returns ( uint price_ ) {        [m
+[31m-        price_ = terms.controlVariable.mul( debtRatio() )/ 1e5;[m
+[32m+[m[32m        price_ = terms.controlVariable.mul( debtRatio() ).add( 1000000000 ) / 1e7;[m
+         if ( price_ < terms.minimumPrice ) {[m
+             price_ = terms.minimumPrice;[m
+         }[m
+[36m@@ -847,20 +856,16 @@[m [mcontract TimeBondDepository is Ownable {[m
+         }[m
+     }[m
+ [m
+[31m-    /**[m
+[31m-     *  @notice get asset price from chainlink[m
+[31m-     */[m
+[31m-    function assetPrice() public view returns (int) {[m
+[31m-        ( , int price, , , ) = priceFeed.latestRoundData();[m
+[31m-        return price;[m
+[31m-    }[m
+[31m-[m
+     /**[m
+      *  @notice converts bond price to DAI value[m
+      *  @return price_ uint[m
+      */[m
+     function bondPriceInUSD() public view returns ( uint price_ ) {[m
+[31m-        price_ = bondPrice().mul( uint( assetPrice() ) ).mul( 1e6 );[m
+[32m+[m[32m        if( isLiquidityBond ) {[m
+[32m+[m[32m            price_ = bondPrice().mul( bondCalculator.markdown( address(principle) ) ) / 100 ;[m
+[32m+[m[32m        } else {[m
+[32m+[m[32m            price_ = bondPrice().mul( 10 ** principle.decimals() ) / 10000;[m
+[32m+[m[32m        }[m
+     }[m
+ [m
+ [m
+[36m@@ -873,15 +878,19 @@[m [mcontract TimeBondDepository is Ownable {[m
+         debtRatio_ = FixedPoint.fraction( [m
+             currentDebt().mul( 1e9 ), [m
+             supply[m
+[31m-        ).decode112with18()/ 1e18;[m
+[32m+[m[32m        ).decode112with18() / 1e18;[m
+     }[m
+ [m
+     /**[m
+[31m-     *  @notice debt ratio in same terms as reserve bonds[m
+[32m+[m[32m     *  @notice debt ratio in same terms for reserve or liquidity bonds[m
+      *  @return uint[m
+      */[m
+     function standardizedDebtRatio() external view returns ( uint ) {[m
+[31m-        return debtRatio().mul( uint( assetPrice() ) )/ 10**priceFeed.decimals(); // ETH feed is 8 decimals[m
+[32m+[m[32m        if ( isLiquidityBond ) {[m
+[32m+[m[32m            return debtRatio().mul( bondCalculator.markdown( address(principle) ) ) / 1e9;[m
+[32m+[m[32m        } else {[m
+[32m+[m[32m            return debtRatio();[m
+[32m+[m[32m        }[m
+     }[m
+ [m
+     /**[m
+[36m@@ -898,7 +907,7 @@[m [mcontract TimeBondDepository is Ownable {[m
+      */[m
+     function debtDecay() public view returns ( uint decay_ ) {[m
+         uint32 timeSinceLast = uint32(block.timestamp).sub32( lastDecay );[m
+[31m-        decay_ = totalDebt.mul( timeSinceLast )/ terms.vestingTerm;[m
+[32m+[m[32m        decay_ = (totalDebt.mul( timeSinceLast )).div(terms.vestingTerm);[m
+         if ( decay_ > totalDebt ) {[m
+             decay_ = totalDebt;[m
+         }[m
+[36m@@ -916,7 +925,7 @@[m [mcontract TimeBondDepository is Ownable {[m
+         uint vesting = bond.vesting;[m
+ [m
+         if ( vesting > 0 ) {[m
+[31m-            percentVested_ = secondsSinceLast.mul( 10000 )/vesting;[m
+[32m+[m[32m            percentVested_ = secondsSinceLast.mul( 10000 ) / vesting;[m
+         } else {[m
+             percentVested_ = 0;[m
+         }[m
+[36m@@ -934,7 +943,7 @@[m [mcontract TimeBondDepository is Ownable {[m
+         if ( percentVested >= 10000 ) {[m
+             pendingPayout_ = payout;[m
+         } else {[m
+[31m-            pendingPayout_ = payout.mul( percentVested )/ 10000;[m
+[32m+[m[32m            pendingPayout_ = payout.mul( percentVested ) / 10000;[m
+         }[m
+     }[m
+ [m
+[36m@@ -947,10 +956,12 @@[m [mcontract TimeBondDepository is Ownable {[m
+      *  @notice allow anyone to send lost tokens (excluding principle or Time) to the DAO[m
+      *  @return bool[m
+      */[m
+[31m-    function recoverLostToken( IERC20 _token ) external returns ( bool ) {[m
+[32m+[m[32m    function recoverLostToken(IERC20 _token ) external returns ( bool ) {[m
+         require( _token != Time, "NAT" );[m
+         require( _token != principle, "NAP" );[m
+[31m-        _token.safeTransfer( DAO, _token.balanceOf( address(this) ) );[m
+[32m+[m[32m        uint balance = _token.balanceOf( address(this));[m
+[32m+[m[32m        _token.safeTransfer( DAO,  balance );[m
+[32m+[m[32m        emit LogRecoverLostToken(address(_token), balance);[m
+         return true;[m
+     }[m
+ [m
+[1mdiff --git a/WEthFixedBondDepository.sol b/WEthFixedBondDepository.sol[m
+[1mindex d271f80..5a38968 100644[m
+[1m--- a/WEthFixedBondDepository.sol[m
+[1m+++ b/WEthFixedBondDepository.sol[m
+[36m@@ -1,5 +1,6 @@[m
+ // SPDX-License-Identifier: AGPL-3.0-or-later[m
+ pragma solidity 0.7.5;[m
+[32m+[m[32mpragma abicoder v2;[m
+ [m
+ interface IOwnable {[m
+   function policy() external view returns (address);[m
+[36m@@ -11,43 +12,61 @@[m [minterface IOwnable {[m
+   function pullManagement() external;[m
+ }[m
+ [m
+[31m-contract Ownable is IOwnable {[m
+[31m-[m
+[31m-    address internal _owner;[m
+[31m-    address internal _newOwner;[m
+[31m-[m
+[31m-    event OwnershipPushed(address indexed previousOwner, address indexed newOwner);[m
+[31m-    event OwnershipPulled(address indexed previousOwner, address indexed newOwner);[m
+[32m+[m[32mcontract OwnableData {[m
+[32m+[m[32m    address public owner;[m
+[32m+[m[32m    address public pendingOwner;[m
+[32m+[m[32m}[m
+ [m
+[31m-    constructor () {[m
+[31m-        _owner = msg.sender;[m
+[31m-        emit OwnershipPushed( address(0), _owner );[m
+[32m+[m[32mcontract Ownable is OwnableData {[m
+[32m+[m[32m    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);[m
+[32m+[m
+[32m+[m[32m    /// @notice `owner` defaults to msg.sender on construction.[m
+[32m+[m[32m    constructor() {[m
+[32m+[m[32m        owner = msg.sender;[m
+[32m+[m[32m        emit OwnershipTransferred(address(0), msg.sender);[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /// @notice Transfers ownership to `newOwner`. Either directly or claimable by the new pending owner.[m
+[32m+[m[32m    /// Can only be invoked by the current `owner`.[m
+[32m+[m[32m    /// @param newOwner Address of the new owner.[m
+[32m+[m[32m    /// @param direct True if `newOwner` should be set immediately. False if `newOwner` needs to use `claimOwnership`.[m
+[32m+[m[32m    /// @param renounce Allows the `newOwner` to be `address(0)` if `direct` and `renounce` is True. Has no effect otherwise.[m
+[32m+[m[32m    function transferOwnership([m
+[32m+[m[32m        address newOwner,[m
+[32m+[m[32m        bool direct,[m
+[32m+[m[32m        bool renounce[m
+[32m+[m[32m    ) public onlyOwner {[m
+[32m+[m[32m        if (direct) {[m
+[32m+[m[32m            // Checks[m
+[32m+[m[32m            require(newOwner != address(0) || renounce, "Ownable: zero address");[m
+[32m+[m
+[32m+[m[32m            // Effects[m
+[32m+[m[32m            emit OwnershipTransferred(owner, newOwner);[m
+[32m+[m[32m            owner = newOwner;[m
+[32m+[m[32m            pendingOwner = address(0);[m
+[32m+[m[32m        } else {[m
+[32m+[m[32m            // Effects[m
+[32m+[m[32m            pendingOwner = newOwner;[m
+[32m+[m[32m        }[m
+     }[m
+ [m
+[31m-    function policy() public view override returns (address) {[m
+[31m-        return _owner;[m
+[31m-    }[m
+[32m+[m[32m    /// @notice Needs to be called by `pendingOwner` to claim ownership.[m
+[32m+[m[32m    function claimOwnership() public {[m
+[32m+[m[32m        address _pendingOwner = pendingOwner;[m
+ [m
+[31m-    modifier onlyPolicy() {[m
+[31m-        require( _owner == msg.sender, "Ownable: caller is not the owner" );[m
+[31m-        _;[m
+[31m-    }[m
+[32m+[m[32m        // Checks[m
+[32m+[m[32m        require(msg.sender == _pendingOwner, "Ownable: caller != pending owner");[m
+ [m
+[31m-    function renounceManagement() public virtual override onlyPolicy() {[m
+[31m-        emit OwnershipPushed( _owner, address(0) );[m
+[31m-        _owner = address(0);[m
+[32m+[m[32m        // Effects[m
+[32m+[m[32m        emit OwnershipTransferred(owner, _pendingOwner);[m
+[32m+[m[32m        owner = _pendingOwner;[m
+[32m+[m[32m        pendingOwner = address(0);[m
+     }[m
+ [m
+[31m-    function pushManagement( address newOwner_ ) public virtual override onlyPolicy() {[m
+[31m-        require( newOwner_ != address(0), "Ownable: new owner is the zero address");[m
+[31m-        emit OwnershipPushed( _owner, newOwner_ );[m
+[31m-        _newOwner = newOwner_;[m
+[31m-    }[m
+[31m-    [m
+[31m-    function pullManagement() public virtual override {[m
+[31m-        require( msg.sender == _newOwner, "Ownable: must be new owner to pull");[m
+[31m-        emit OwnershipPulled( _owner, _newOwner );[m
+[31m-        _owner = _newOwner;[m
+[32m+[m[32m    /// @notice Only allows the `owner` to execute the function.[m
+[32m+[m[32m    modifier onlyOwner() {[m
+[32m+[m[32m        require(msg.sender == owner, "Ownable: caller is not the owner");[m
+[32m+[m[32m        _;[m
+     }[m
+ }[m
+ [m
+[36m@@ -99,6 +118,11 @@[m [mlibrary LowGasSafeMath {[m
+     function sub(int256 x, int256 y) internal pure returns (int256 z) {[m
+         require((z = x - y) <= x == (y >= 0));[m
+     }[m
+[32m+[m
+[32m+[m[32m    function div(uint256 x, uint256 y) internal pure returns(uint256 z){[m
+[32m+[m[32m        require(y > 0);[m
+[32m+[m[32m        z=x/y;[m
+[32m+[m[32m    }[m
+ }[m
+ [m
+ library Address {[m
+[36m@@ -246,7 +270,6 @@[m [mlibrary Address {[m
+ [m
+     }[m
+ }[m
+[31m-[m
+ interface IERC20 {[m
+     function decimals() external view returns (uint8);[m
+ [m
+[36m@@ -391,43 +414,17 @@[m [mlibrary FixedPoint {[m
+     }[m
+ }[m
+ [m
+[31m-interface AggregatorV3Interface {[m
+[31m-[m
+[31m-  function decimals() external view returns (uint8);[m
+[31m-  function description() external view returns (string memory);[m
+[31m-  function version() external view returns (uint256);[m
+[31m-[m
+[31m-  // getRoundData and latestRoundData should both raise "No data present"[m
+[31m-  // if they do not have data to report, instead of returning unset values[m
+[31m-  // which could be misinterpreted as actual reported values.[m
+[31m-  function getRoundData(uint80 _roundId)[m
+[31m-    external[m
+[31m-    view[m
+[31m-    returns ([m
+[31m-      uint80 roundId,[m
+[31m-      int256 answer,[m
+[31m-      uint256 startedAt,[m
+[31m-      uint256 updatedAt,[m
+[31m-      uint80 answeredInRound[m
+[31m-    );[m
+[31m-  function latestRoundData()[m
+[31m-    external[m
+[31m-    view[m
+[31m-    returns ([m
+[31m-      uint80 roundId,[m
+[31m-      int256 answer,[m
+[31m-      uint256 startedAt,[m
+[31m-      uint256 updatedAt,[m
+[31m-      uint80 answeredInRound[m
+[31m-    );[m
+[31m-}[m
+[31m-[m
+ interface ITreasury {[m
+[31m-    function deposit( uint _amount, address _token, uint _profit ) external returns ( bool );[m
+[31m-    function valueOf( address _token, uint _amount ) external view returns ( uint value_ );[m
+[32m+[m[32m    function deposit( uint _amount, address _token, uint _profit ) external returns ( uint );[m
+[32m+[m[32m    function valueOfToken( address _token, uint _amount ) external view returns ( uint value_ );[m
+     function mintRewards( address _recipient, uint _amount ) external;[m
+ }[m
+ [m
+[32m+[m[32minterface IBondCalculator {[m
+[32m+[m[32m    function valuation( address _LP, uint _amount ) external view returns ( uint );[m
+[32m+[m[32m    function markdown( address _LP ) external view returns ( uint );[m
+[32m+[m[32m}[m
+[32m+[m
+ interface IStaking {[m
+     function stake( uint _amount, address _recipient ) external returns ( bool );[m
+ }[m
+[36m@@ -436,16 +433,10 @@[m [minterface IStakingHelper {[m
+     function stake( uint _amount, address _recipient ) external;[m
+ }[m
+ [m
+[31m-interface IWAVAX9 is IERC20 {[m
+[31m-    /// @notice Deposit ether to get wrapped ether[m
+[31m-    function deposit() external payable;[m
+[31m-}[m
+[31m-[m
+[31m-contract TimeBondDepository is Ownable {[m
+[32m+[m[32mcontract MaiaBondDepository is Ownable {[m
+ [m
+     using FixedPoint for *;[m
+     using SafeERC20 for IERC20;[m
+[31m-    using SafeERC20 for IWAVAX9;[m
+     using LowGasSafeMath for uint;[m
+     using LowGasSafeMath for uint32;[m
+ [m
+[36m@@ -458,17 +449,23 @@[m [mcontract TimeBondDepository is Ownable {[m
+     event BondRedeemed( address indexed recipient, uint payout, uint remaining );[m
+     event BondPriceChanged( uint indexed priceInUSD, uint indexed internalPrice, uint indexed debtRatio );[m
+     event ControlVariableAdjustment( uint initialBCV, uint newBCV, uint adjustment, bool addition );[m
+[31m-[m
+[32m+[m[32m    event InitTerms( Terms terms);[m
+[32m+[m[32m    event LogSetTerms(PARAMETER param, uint value);[m
+[32m+[m[32m    event LogSetAdjustment( Adjust adjust);[m
+[32m+[m[32m    event LogSetStaking( address indexed stakingContract, bool isHelper);[m
+[32m+[m[32m    event LogRecoverLostToken( address indexed tokenToRecover, uint amount);[m
+ [m
+ [m
+ [m
+     /* ======== STATE VARIABLES ======== */[m
+[32m+[m
+     IERC20 public immutable Time; // token given as payment for bond[m
+[31m-    IWAVAX9 public immutable principle; // token used to create bond[m
+[32m+[m[32m    IERC20 public immutable principle; // token used to create bond[m
+     ITreasury public immutable treasury; // mints Time when receives principle[m
+     address public immutable DAO; // receives profit share from bond[m
+ [m
+[31m-    AggregatorV3Interface public priceFeed;[m
+[32m+[m[32m    bool public immutable isLiquidityBond; // LP and Reserve bonds are treated slightly different[m
+[32m+[m[32m    IBondCalculator public immutable bondCalculator; // calculates value of LP tokens[m
+ [m
+     IStaking public staking; // to auto-stake payout[m
+     IStakingHelper public stakingHelper; // to stake and claim if no staking warmup[m
+[36m@@ -482,17 +479,19 @@[m [mcontract TimeBondDepository is Ownable {[m
+     uint public totalDebt; // total value of outstanding bonds; used for pricing[m
+     uint32 public lastDecay; // reference time for debt decay[m
+ [m
+[31m-[m
+     mapping (address => bool) public allowedZappers;[m
+ [m
+ [m
+[32m+[m
+[32m+[m
+     /* ======== STRUCTS ======== */[m
+ [m
+     // Info for creating new bonds[m
+     struct Terms {[m
+         uint controlVariable; // scaling variable for price[m
+[31m-        uint minimumPrice; // vs principle value. 4 decimals (1500 = 0.15)[m
+[32m+[m[32m        uint minimumPrice; // vs principle value[m
+         uint maxPayout; // in thousandths of a %. i.e. 500 = 0.5%[m
+[32m+[m[32m        uint fee; // as % of bond payout, in hundreths. ( 500 = 5% = 0.05 for every 1 paid)[m
+         uint maxDebt; // 9 decimal debt ratio, max % total supply created as debt[m
+         uint32 vestingTerm; // in seconds[m
+     }[m
+[36m@@ -501,8 +500,8 @@[m [mcontract TimeBondDepository is Ownable {[m
+     struct Bond {[m
+         uint payout; // Time remaining to be paid[m
+         uint pricePaid; // In DAI, for front end viewing[m
+[31m-        uint32 vesting; // Seconds left to vest[m
+         uint32 lastTime; // Last interaction[m
+[32m+[m[32m        uint32 vesting; // Seconds left to vest[m
+     }[m
+ [m
+     // Info for incremental adjustments to control variable [m
+[36m@@ -523,48 +522,54 @@[m [mcontract TimeBondDepository is Ownable {[m
+         address _Time,[m
+         address _principle,[m
+         address _treasury, [m
+[31m-        address _DAO,[m
+[31m-        address _feed[m
+[32m+[m[32m        address _DAO,[m[41m [m
+[32m+[m[32m        address _bondCalculator[m
+     ) {[m
+         require( _Time != address(0) );[m
+         Time = IERC20(_Time);[m
+         require( _principle != address(0) );[m
+[31m-        principle = IWAVAX9(_principle);[m
+[32m+[m[32m        principle = IERC20(_principle);[m
+         require( _treasury != address(0) );[m
+         treasury = ITreasury(_treasury);[m
+         require( _DAO != address(0) );[m
+         DAO = _DAO;[m
+[31m-        require( _feed != address(0) );[m
+[31m-        priceFeed = AggregatorV3Interface( _feed );[m
+[32m+[m[32m        // bondCalculator should be address(0) if not LP bond[m
+[32m+[m[32m        bondCalculator = IBondCalculator(_bondCalculator);[m
+[32m+[m[32m        isLiquidityBond = ( _bondCalculator != address(0) );[m
+     }[m
+ [m
+     /**[m
+      *  @notice initializes bond parameters[m
+      *  @param _controlVariable uint[m
+[31m-     *  @param _vestingTerm uint[m
+[32m+[m[32m     *  @param _vestingTerm uint32[m
+      *  @param _minimumPrice uint[m
+      *  @param _maxPayout uint[m
+[32m+[m[32m     *  @param _fee uint[m
+      *  @param _maxDebt uint[m
+      */[m
+     function initializeBondTerms( [m
+         uint _controlVariable, [m
+         uint _minimumPrice,[m
+         uint _maxPayout,[m
+[32m+[m[32m        uint _fee,[m
+         uint _maxDebt,[m
+         uint32 _vestingTerm[m
+[31m-    ) external onlyPolicy() {[m
+[31m-        require( currentDebt() == 0, "Debt must be 0 for initialization" );[m
+[32m+[m[32m    ) external onlyOwner() {[m
+[32m+[m[32m        require( terms.controlVariable == 0, "Bonds must be initialized from 0" );[m
+         require( _controlVariable >= 40, "Can lock adjustment" );[m
+[31m-        require( _maxPayout <= 1000, "Payout cannot be above 1 percent" );[m
+[32m+[m[32m        require( _maxPayout <= 10000, "Payout cannot be above 1 percent" );[m
+         require( _vestingTerm >= 129600, "Vesting must be longer than 36 hours" );[m
+[32m+[m[32m        require( _fee <= 10000, "DAO fee cannot exceed payout" );[m
+         terms = Terms ({[m
+             controlVariable: _controlVariable,[m
+[31m-            vestingTerm: _vestingTerm,[m
+             minimumPrice: _minimumPrice,[m
+             maxPayout: _maxPayout,[m
+[31m-            maxDebt: _maxDebt[m
+[32m+[m[32m            fee: _fee,[m
+[32m+[m[32m            maxDebt: _maxDebt,[m
+[32m+[m[32m            vestingTerm: _vestingTerm[m
+         });[m
+         lastDecay = uint32(block.timestamp);[m
+[32m+[m[32m        emit InitTerms(terms);[m
+     }[m
+ [m
+ [m
+[36m@@ -572,24 +577,28 @@[m [mcontract TimeBondDepository is Ownable {[m
+     [m
+     /* ======== POLICY FUNCTIONS ======== */[m
+ [m
+[31m-    enum PARAMETER { VESTING, PAYOUT, DEBT, MINPRICE }[m
+[32m+[m[32m    enum PARAMETER { VESTING, PAYOUT, FEE, DEBT, MINPRICE }[m
+     /**[m
+      *  @notice set parameters for new bonds[m
+      *  @param _parameter PARAMETER[m
+      *  @param _input uint[m
+      */[m
+[31m-    function setBondTerms ( PARAMETER _parameter, uint _input ) external onlyPolicy() {[m
+[32m+[m[32m    function setBondTerms ( PARAMETER _parameter, uint _input ) external onlyOwner() {[m
+         if ( _parameter == PARAMETER.VESTING ) { // 0[m
+             require( _input >= 129600, "Vesting must be longer than 36 hours" );[m
+             terms.vestingTerm = uint32(_input);[m
+         } else if ( _parameter == PARAMETER.PAYOUT ) { // 1[m
+[31m-            require( _input <= 1000, "Payout cannot be above 1 percent" );[m
+[32m+[m[32m            require( _input <= 10000, "Payout cannot be above 1 percent" );[m
+             terms.maxPayout = _input;[m
+[31m-        } else if ( _parameter == PARAMETER.DEBT ) { // 2[m
+[32m+[m[32m        } else if ( _parameter == PARAMETER.FEE ) { // 2[m
+[32m+[m[32m            require( _input <= 10000, "DAO fee cannot exceed payout" );[m
+[32m+[m[32m            terms.fee = _input;[m
+[32m+[m[32m        } else if ( _parameter == PARAMETER.DEBT ) { // 3[m
+             terms.maxDebt = _input;[m
+[31m-        } else if ( _parameter == PARAMETER.MINPRICE ) { // 3[m
+[32m+[m[32m        } else if ( _parameter == PARAMETER.MINPRICE ) { // 4[m
+             terms.minimumPrice = _input;[m
+         }[m
+[32m+[m[32m        emit LogSetTerms(_parameter, _input);[m
+     }[m
+ [m
+     /**[m
+[36m@@ -604,8 +613,8 @@[m [mcontract TimeBondDepository is Ownable {[m
+         uint _increment, [m
+         uint _target,[m
+         uint32 _buffer [m
+[31m-    ) external onlyPolicy() {[m
+[31m-        require( _increment <= terms.controlVariable.mul( 25 )/ 1000, "Increment too large" );[m
+[32m+[m[32m    ) external onlyOwner() {[m
+[32m+[m[32m        require( _increment <= terms.controlVariable.mul( 25 ) / 1000 , "Increment too large" );[m
+         require(_target >= 40, "Next Adjustment could be locked");[m
+         adjustment = Adjust({[m
+             add: _addition,[m
+[36m@@ -614,6 +623,7 @@[m [mcontract TimeBondDepository is Ownable {[m
+             buffer: _buffer,[m
+             lastTime: uint32(block.timestamp)[m
+         });[m
+[32m+[m[32m        emit LogSetAdjustment(adjustment);[m
+     }[m
+ [m
+     /**[m
+[36m@@ -621,8 +631,8 @@[m [mcontract TimeBondDepository is Ownable {[m
+      *  @param _staking address[m
+      *  @param _helper bool[m
+      */[m
+[31m-    function setStaking( address _staking, bool _helper ) external onlyPolicy() {[m
+[31m-        require( _staking != address(0) , "IA");[m
+[32m+[m[32m    function setStaking( address _staking, bool _helper ) external onlyOwner() {[m
+[32m+[m[32m        require( _staking != address(0), "IA" );[m
+         if ( _helper ) {[m
+             useHelper = true;[m
+             stakingHelper = IStakingHelper(_staking);[m
+[36m@@ -630,15 +640,16 @@[m [mcontract TimeBondDepository is Ownable {[m
+             useHelper = false;[m
+             staking = IStaking(_staking);[m
+         }[m
+[32m+[m[32m        emit LogSetStaking(_staking, _helper);[m
+     }[m
+ [m
+[31m-    function allowZapper(address zapper) external onlyPolicy {[m
+[32m+[m[32m    function allowZapper(address zapper) external onlyOwner {[m
+         require(zapper != address(0), "ZNA");[m
+         [m
+         allowedZappers[zapper] = true;[m
+     }[m
+ [m
+[31m-    function removeZapper(address zapper) external onlyPolicy {[m
+[32m+[m[32m    function removeZapper(address zapper) external onlyOwner {[m
+        [m
+         allowedZappers[zapper] = false;[m
+     }[m
+[36m@@ -659,36 +670,31 @@[m [mcontract TimeBondDepository is Ownable {[m
+         uint _amount, [m
+         uint _maxPrice,[m
+         address _depositor[m
+[31m-    ) external payable returns ( uint ) {[m
+[32m+[m[32m    ) external returns ( uint ) {[m
+         require( _depositor != address(0), "Invalid address" );[m
+         require(msg.sender == _depositor || allowedZappers[msg.sender], "LFNA");[m
+         decayDebt();[m
+[31m-        require( totalDebt <= terms.maxDebt, "Max capacity reached" );[m
+[31m-        [m
+[32m+[m
+         uint priceInUSD = bondPriceInUSD(); // Stored in bond info[m
+         uint nativePrice = _bondPrice();[m
+ [m
+         require( _maxPrice >= nativePrice, "Slippage limit: more than max price" ); // slippage protection[m
+ [m
+[31m-        uint value = treasury.valueOf( address(principle), _amount );[m
+[32m+[m[32m        uint value = treasury.valueOfToken( address(principle), _amount );[m
+         uint payout = payoutFor( value ); // payout to bonder is computed[m
+ [m
+[32m+[m[32m        require( totalDebt.add(value) <= terms.maxDebt, "Max capacity reached" );[m
+         require( payout >= 10000000, "Bond too small" ); // must be > 0.01 Time ( underflow protection )[m
+         require( payout <= maxPayout(), "Bond too large"); // size protection because there is no slippage[m
+ [m
+         /**[m
+[31m-            asset carries risk and is not minted against[m
+[31m-            asset transfered to treasury and rewards minted as payout[m
+[32m+[m[32m            principle is transferred in[m
+[32m+[m[32m            approved and[m
+[32m+[m[32m            deposited into the treasury[m
+          */[m
+[31m-        if (address(this).balance >= _amount) {[m
+[31m-            // pay with WETH9[m
+[31m-            require(msg.value == _amount, "UA");[m
+[31m-            principle.deposit{value: _amount}(); // wrap only what is needed to pay[m
+[31m-            principle.transfer(address(treasury), _amount);[m
+[31m-        } else {[m
+[31m-            principle.safeTransferFrom( msg.sender, address(treasury), _amount );[m
+[31m-        }[m
+[31m-        [m
+[32m+[m[32m        principle.approve( address( treasury ), _amount );[m
+[32m+[m[32m        principle.safeTransferFrom( msg.sender, address(treasury), _amount );[m
+[32m+[m
+         treasury.mintRewards( address(this), payout );[m
+         [m
+         // total debt is increased[m
+[36m@@ -716,10 +722,11 @@[m [mcontract TimeBondDepository is Ownable {[m
+      *  @param _stake bool[m
+      *  @return uint[m
+      */ [m
+[31m-    function redeem( address _recipient, bool _stake ) external returns ( uint ) { [m
+[31m-        require(msg.sender == _recipient, "NA");       [m
+[32m+[m[32m    function redeem( address _recipient, bool _stake ) external returns ( uint ) {[m
+[32m+[m[32m        require(msg.sender == _recipient, "NA");[m[41m     [m
+         Bond memory info = bondInfo[ _recipient ];[m
+[31m-        uint percentVested = percentVestedFor( _recipient ); // (seconds since last interaction / vesting term remaining)[m
+[32m+[m[32m        // (seconds since last interaction / vesting term remaining)[m
+[32m+[m[32m        uint percentVested = percentVestedFor( _recipient );[m
+ [m
+         if ( percentVested >= 10000 ) { // if fully vested[m
+             delete bondInfo[ _recipient ]; // delete user info[m
+[36m@@ -728,13 +735,12 @@[m [mcontract TimeBondDepository is Ownable {[m
+ [m
+         } else { // if unfinished[m
+             // calculate payout vested[m
+[31m-            uint payout = info.payout.mul( percentVested )/ 10000;[m
+[31m-[m
+[32m+[m[32m            uint payout = info.payout.mul( percentVested ) / 10000 ;[m
+             // store updated deposit info[m
+             bondInfo[ _recipient ] = Bond({[m
+                 payout: info.payout.sub( payout ),[m
+                 vesting: info.vesting.sub32( uint32( block.timestamp ).sub32( info.lastTime ) ),[m
+[31m-                lastTime: uint32( block.timestamp ),[m
+[32m+[m[32m                lastTime: uint32(block.timestamp),[m
+                 pricePaid: info.pricePaid[m
+             });[m
+ [m
+[36m@@ -773,22 +779,26 @@[m [mcontract TimeBondDepository is Ownable {[m
+      *  @notice makes incremental adjustment to control variable[m
+      */[m
+     function adjust() internal {[m
+[31m-         uint timeCanAdjust = adjustment.lastTime.add32( adjustment.buffer );[m
+[31m-         if( adjustment.rate != 0 && block.timestamp >= timeCanAdjust ) {[m
+[32m+[m[32m        uint timeCanAdjust = adjustment.lastTime.add32( adjustment.buffer );[m
+[32m+[m[32m        if( adjustment.rate != 0 && block.timestamp >= timeCanAdjust ) {[m
+             uint initial = terms.controlVariable;[m
+[32m+[m[32m            uint bcv = initial;[m
+             if ( adjustment.add ) {[m
+[31m-                terms.controlVariable = terms.controlVariable.add( adjustment.rate );[m
+[31m-                if ( terms.controlVariable >= adjustment.target ) {[m
+[32m+[m[32m                bcv = bcv.add(adjustment.rate);[m
+[32m+[m[32m                if ( bcv >= adjustment.target ) {[m
+                     adjustment.rate = 0;[m
+[32m+[m[32m                    bcv = adjustment.target;[m
+                 }[m
+             } else {[m
+[31m-                terms.controlVariable = terms.controlVariable.sub( adjustment.rate );[m
+[31m-                if ( terms.controlVariable <= adjustment.target ) {[m
+[32m+[m[32m                bcv = bcv.sub(adjustment.rate);[m
+[32m+[m[32m                if ( bcv <= adjustment.target ) {[m
+                     adjustment.rate = 0;[m
+[32m+[m[32m                    bcv = adjustment.target;[m
+                 }[m
+             }[m
+[32m+[m[32m            terms.controlVariable = bcv;[m
+             adjustment.lastTime = uint32(block.timestamp);[m
+[31m-            emit ControlVariableAdjustment( initial, terms.controlVariable, adjustment.rate, adjustment.add );[m
+[32m+[m[32m            emit ControlVariableAdjustment( initial, bcv, adjustment.rate, adjustment.add );[m
+         }[m
+     }[m
+ [m
+[36m@@ -810,7 +820,7 @@[m [mcontract TimeBondDepository is Ownable {[m
+      *  @return uint[m
+      */[m
+     function maxPayout() public view returns ( uint ) {[m
+[31m-        return Time.totalSupply().mul( terms.maxPayout )/ 100000;[m
+[32m+[m[32m        return Time.totalSupply().mul( terms.maxPayout ) / 100000 ;[m
+     }[m
+ [m
+     /**[m
+[36m@@ -819,7 +829,7 @@[m [mcontract TimeBondDepository is Ownable {[m
+      *  @return uint[m
+      */[m
+     function payoutFor( uint _value ) public view returns ( uint ) {[m
+[31m-        return FixedPoint.fraction( _value, bondPrice() ).decode112with18()/ 1e14;[m
+[32m+[m[32m        return FixedPoint.fraction( _value, bondPrice() ).decode112with18() / 1e14 ;[m
+     }[m
+ [m
+ [m
+[36m@@ -828,10 +838,7 @@[m [mcontract TimeBondDepository is Ownable {[m
+      *  @return price_ uint[m
+      */[m
+     function bondPrice() public view returns ( uint price_ ) {        [m
+[31m-        price_ = terms.controlVariable.mul( debtRatio() )/ 1e5;[m
+[31m-        if ( price_ < terms.minimumPrice ) {[m
+[31m-            price_ = terms.minimumPrice;[m
+[31m-        }[m
+[32m+[m[32m        price_ = terms.minimumPrice;[m[41m        [m
+     }[m
+ [m
+     /**[m
+[36m@@ -839,20 +846,7 @@[m [mcontract TimeBondDepository is Ownable {[m
+      *  @return price_ uint[m
+      */[m
+     function _bondPrice() internal returns ( uint price_ ) {[m
+[31m-        price_ = terms.controlVariable.mul( debtRatio() ).add( 1000000000 ) / 1e7;[m
+[31m-        if ( price_ < terms.minimumPrice ) {[m
+[31m-            price_ = terms.minimumPrice;        [m
+[31m-        } else if ( terms.minimumPrice != 0 ) {[m
+[31m-            terms.minimumPrice = 0;[m
+[31m-        }[m
+[31m-    }[m
+[31m-[m
+[31m-    /**[m
+[31m-     *  @notice get asset price from chainlink[m
+[31m-     */[m
+[31m-    function assetPrice() public view returns (int) {[m
+[31m-        ( , int price, , , ) = priceFeed.latestRoundData();[m
+[31m-        return price;[m
+[32m+[m[32m        price_ = terms.minimumPrice;[m[41m        [m
+     }[m
+ [m
+     /**[m
+[36m@@ -860,7 +854,11 @@[m [mcontract TimeBondDepository is Ownable {[m
+      *  @return price_ uint[m
+      */[m
+     function bondPriceInUSD() public view returns ( uint price_ ) {[m
+[31m-        price_ = bondPrice().mul( uint( assetPrice() ) ).mul( 1e6 );[m
+[32m+[m[32m        if( isLiquidityBond ) {[m
+[32m+[m[32m            price_ = bondPrice().mul( bondCalculator.markdown( address(principle) ) ) / 100 ;[m
+[32m+[m[32m        } else {[m
+[32m+[m[32m            price_ = bondPrice().mul( 10 ** principle.decimals() ) / 10000;[m
+[32m+[m[32m        }[m
+     }[m
+ [m
+ [m
+[36m@@ -873,15 +871,19 @@[m [mcontract TimeBondDepository is Ownable {[m
+         debtRatio_ = FixedPoint.fraction( [m
+             currentDebt().mul( 1e9 ), [m
+             supply[m
+[31m-        ).decode112with18()/ 1e18;[m
+[32m+[m[32m        ).decode112with18() / 1e18;[m
+     }[m
+ [m
+     /**[m
+[31m-     *  @notice debt ratio in same terms as reserve bonds[m
+[32m+[m[32m     *  @notice debt ratio in same terms for reserve or liquidity bonds[m
+      *  @return uint[m
+      */[m
+     function standardizedDebtRatio() external view returns ( uint ) {[m
+[31m-        return debtRatio().mul( uint( assetPrice() ) )/ 10**priceFeed.decimals(); // ETH feed is 8 decimals[m
+[32m+[m[32m        if ( isLiquidityBond ) {[m
+[32m+[m[32m            return debtRatio().mul( bondCalculator.markdown( address(principle) ) ) / 1e9;[m
+[32m+[m[32m        } else {[m
+[32m+[m[32m            return debtRatio();[m
+[32m+[m[32m        }[m
+     }[m
+ [m
+     /**[m
+[36m@@ -898,7 +900,7 @@[m [mcontract TimeBondDepository is Ownable {[m
+      */[m
+     function debtDecay() public view returns ( uint decay_ ) {[m
+         uint32 timeSinceLast = uint32(block.timestamp).sub32( lastDecay );[m
+[31m-        decay_ = totalDebt.mul( timeSinceLast )/ terms.vestingTerm;[m
+[32m+[m[32m        decay_ = (totalDebt.mul( timeSinceLast )).div(terms.vestingTerm);[m
+         if ( decay_ > totalDebt ) {[m
+             decay_ = totalDebt;[m
+         }[m
+[36m@@ -916,7 +918,7 @@[m [mcontract TimeBondDepository is Ownable {[m
+         uint vesting = bond.vesting;[m
+ [m
+         if ( vesting > 0 ) {[m
+[31m-            percentVested_ = secondsSinceLast.mul( 10000 )/vesting;[m
+[32m+[m[32m            percentVested_ = secondsSinceLast.mul( 10000 ) / vesting;[m
+         } else {[m
+             percentVested_ = 0;[m
+         }[m
+[36m@@ -934,7 +936,7 @@[m [mcontract TimeBondDepository is Ownable {[m
+         if ( percentVested >= 10000 ) {[m
+             pendingPayout_ = payout;[m
+         } else {[m
+[31m-            pendingPayout_ = payout.mul( percentVested )/ 10000;[m
+[32m+[m[32m            pendingPayout_ = payout.mul( percentVested ) / 10000;[m
+         }[m
+     }[m
+ [m
+[36m@@ -947,10 +949,12 @@[m [mcontract TimeBondDepository is Ownable {[m
+      *  @notice allow anyone to send lost tokens (excluding principle or Time) to the DAO[m
+      *  @return bool[m
+      */[m
+[31m-    function recoverLostToken( IERC20 _token ) external returns ( bool ) {[m
+[32m+[m[32m    function recoverLostToken(IERC20 _token ) external returns ( bool ) {[m
+         require( _token != Time, "NAT" );[m
+         require( _token != principle, "NAP" );[m
+[31m-        _token.safeTransfer( DAO, _token.balanceOf( address(this) ) );[m
+[32m+[m[32m        uint balance = _token.balanceOf( address(this));[m
+[32m+[m[32m        _token.safeTransfer( DAO,  balance );[m
+[32m+[m[32m        emit LogRecoverLostToken(address(_token), balance);[m
+         return true;[m
+     }[m
+ [m
+[1mdiff --git a/sMaiaERC20.sol b/sMaiaERC20.sol[m
+[1mindex 73f4525..c57aa09 100644[m
+[1m--- a/sMaiaERC20.sol[m
+[1m+++ b/sMaiaERC20.sol[m
+[36m@@ -839,7 +839,7 @@[m [mcontract Ownable is OwnableData {[m
+     }[m
+ }[m
+ [m
+[31m-contract MEMOries is ERC20Permit, Ownable {[m
+[32m+[m[32mcontract sMaia is ERC20Permit, Ownable {[m
+ [m
+     using LowGasSafeMath for uint256;[m
+ [m
+[36m@@ -884,7 +884,7 @@[m [mcontract MEMOries is ERC20Permit, Ownable {[m
+ [m
+     mapping ( address => mapping ( address => uint256 ) ) private _allowedValue;[m
+ [m
+[31m-    constructor() ERC20("MEMOries", "MEMO", 9) ERC20Permit() {[m
+[32m+[m[32m    constructor() ERC20("Staked Maia", "MAIA", 9) ERC20Permit() {[m
+         initializer = msg.sender;[m
+         _totalSupply = INITIAL_FRAGMENTS_SUPPLY;[m
+         _gonsPerFragment = TOTAL_GONS.div(_totalSupply);[m
+[1mdiff --git a/wsMaia.sol b/wsMaia.sol[m
+[1mindex 8c0db62..1d6279e 100644[m
+[1m--- a/wsMaia.sol[m
+[1m+++ b/wsMaia.sol[m
+[36m@@ -614,7 +614,7 @@[m [minterface IMEMO is IERC20 {[m
+     function index() external view returns ( uint );[m
+ }[m
+ [m
+[31m-contract wMEMO is ERC20 {[m
+[32m+[m[32mcontract wsMAIA is ERC20 {[m
+     using SafeERC20 for IMEMO;[m
+     using LowGasSafeMath for uint;[m
+ [m
+[36m@@ -622,7 +622,7 @@[m [mcontract wMEMO is ERC20 {[m
+     event Wrap(address indexed recipient, uint256 amountMemo, uint256 amountWmemo);[m
+     event UnWrap(address indexed recipient,uint256 amountWmemo, uint256 amountMemo);[m
+ [m
+[31m-    constructor( address _MEMO ) ERC20( 'Wrapped MEMO', 'wMEMO' ) {[m
+[32m+[m[32m    constructor( address _MEMO ) ERC20( 'Wrapped Staked Maia', 'wsMAIA' ) {[m
+         require( _MEMO != address(0) );[m
+         MEMO = IMEMO(_MEMO);[m
+     }[m
