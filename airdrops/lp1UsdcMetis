@@ -1,0 +1,86 @@
+{
+  "message": "OK",
+  "result": [
+    {
+      "address": "0x77314eaa8d99c2ad55f3ca6df4300cfc50bdbc7f",
+      "value": "6879955388492634"
+    },
+    {
+      "address": "0x7c5534e88f8a7b3f81290a4372d85dbd4b9b2ae2",
+      "value": "1309598288440896"
+    },
+    {
+      "address": "0x49321256e60aa605fdd5abb85e96308ad0b19c5f",
+      "value": "482448178032529"
+    },
+    {
+      "address": "0xe968a888792b3c6ca4242a87445e2518f88f2e02",
+      "value": "388320203961640"
+    },
+    {
+      "address": "0x7d54d807e9132fc34acde66de49b36d4f37e8e0c",
+      "value": "241738836737132"
+    },
+    {
+      "address": "0xd8827d60486e01a6c54f7fc2ddcd9527a26af8ba",
+      "value": "65813981795557"
+    },
+    {
+      "address": "0xa198e245bf6929c1a1899e36bf957417143d4f7f",
+      "value": "25643087584376"
+    },
+    {
+      "address": "0xf03df965490882583018c64fd41fa82d7dee032f",
+      "value": "19857045237809"
+    },
+    {
+      "address": "0xc80fdaccc65dcd6ed030fc416190f1c2ab7b12ac",
+      "value": "15804729758941"
+    },
+    {
+      "address": "0x6969e2041b22fcebdb3b4f7a39c0ada38b152f52",
+      "value": "14250550717848"
+    },
+    {
+      "address": "0xc5e3e804a39919d5e3821d204bb38356d00c162c",
+      "value": "12318473935444"
+    },
+    {
+      "address": "0x4c336dd5e6bf2998cd9ded78ece1f0152d5f5b89",
+      "value": "12050576541009"
+    },
+    {
+      "address": "0xdb5ee516b26f70739ec1a18b155ace18a1168d00",
+      "value": "11967277524704"
+    },
+    {
+      "address": "0xc45d05cdc809d20c7b14959e8cd4a1199e3e966f",
+      "value": "11953738744178"
+    },
+    {
+      "address": "0x8ca4ae4152219ef8f4257759064dc857ca823dbd",
+      "value": "10550426692874"
+    },
+    {
+      "address": "0x9d32f1e7c5ff707e92b4b30937a1e5e2c2de2462",
+      "value": "9854789949370"
+    },
+    {
+      "address": "0x15b148740043d62b86d3b8df519d2012e4c17798",
+      "value": "7924718418201"
+    },
+    {
+      "address": "0x2663de7b0fed0f7796e5641a75ed6caa1631443e",
+      "value": "5560509206735"
+    },
+    {
+      "address": "0x2629726ecdfaf4fe606db2c5781926ea67e44f57",
+      "value": "4245098053870"
+    },
+    {
+      "address": "0x656fafabbf1b8c42b4f63ab15f9bee8027a25978",
+      "value": "197201936"
+    }
+  ],
+  "status": "1"
+}
