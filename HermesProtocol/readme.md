@@ -5,7 +5,7 @@ Hermes protocol allows low cost, near 0 slippage trades on uncorrelated or tight
 
 ## Contract addresses
 ### Metis Andromeda
- - BaseV1Factory: `0x068233C5CEb836F0a5f0Ec57CEAC9cD9fB46509`
+ - BaseV1Factory: `0x068233C5CEb836F0a5f0Ec57CEAC9cD9fB46509F`
  - BaseV1Router01: `0x50F0771194A531aaA0EFc1334bE7597A087BEB4B`
 
 
