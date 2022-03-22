@@ -2,6 +2,7 @@
 
 Hermes protocol allows low cost, near 0 slippage trades on uncorrelated or tightly correlated assets. The protocol incentivizes fees instead of liquidity.
 
+You can find Hermes Protocol's documentation [here](https://docs.maiadao.io/).
 
 ## Contract addresses
 ### Metis Andromeda
