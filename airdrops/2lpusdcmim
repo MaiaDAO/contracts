@@ -1,22 +1,18 @@
-{
-  "message": "OK",
-  "result": [
-    {
-      "address": "0x5c53ab3c18657b8ce08984a3426a83df84f710df",
-      "value": "258163525310724278"
-    },
-    {
-      "address": "0x0565978e02bb9bdae46d599a55ab1cbc0df45e9c",
-      "value": "14219083766729267"
-    },
-    {
-      "address": "0xea2c034b98f412bd80822c6543592c5c1e49d147",
-      "value": "1004874497788315"
-    },
-    {
-      "address": "0x76ce1afa630da6d54800a309dd7b6f4076b2059d",
-      "value": "21007561339425"
-    }
-  ],
-  "status": "1"
-}
+[
+  {
+    "address": "0x5c53ab3c18657b8ce08984a3426a83df84f710df",
+    "balance": 258163525310724300
+  },
+  {
+    "address": "0x0565978e02bb9bdae46d599a55ab1cbc0df45e9c",
+    "balance": 14219083766729268
+  },
+  {
+    "address": "0xea2c034b98f412bd80822c6543592c5c1e49d147",
+    "balance": 1004874497788315
+  },
+  {
+    "address": "0x76ce1afa630da6d54800a309dd7b6f4076b2059d",
+    "balance": 21007561339425
+  }
+]
