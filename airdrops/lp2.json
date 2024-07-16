@@ -1,6 +1,7 @@
 [
   {
     "address": "0x7c3658a520bf73cf707dfc057de4b97f5590edc3",
+    "bHermes": 44528615429150672500000,
     "value": 1213421918163,
     "usdc-usdt": 606708056829,
     "metis-usdc": 0,
@@ -8,6 +9,7 @@
   },
   {
     "address": "0xbe9e8ec25866b21ba34e97b9393bcabbcb4a5c86",
+    "bHermes": 44528615429150672500000,
     "value": 812646919431,
     "usdc-usdt": 406321516033,
     "metis-usdc": 0,
@@ -15,6 +17,7 @@
   },
   {
     "address": "0x5c53ab3c18657b8ce08984a3426a83df84f710df",
+    "bHermes": 44528615429150672500000,
     "value": 516419506686,
     "usdc-usdt": 0,
     "metis-usdc": 0,
@@ -22,6 +25,7 @@
   },
   {
     "address": "0x85591bfabb18be044fa98d72f7093469c588483c",
+    "bHermes": 44528615429150672500000,
     "value": 499986372702,
     "usdc-usdt": 249991990488,
     "metis-usdc": 0,
@@ -29,6 +33,7 @@
   },
   {
     "address": "0x93c8ab69af974e55f601c188f23499b8e92f81a6",
+    "bHermes": 44528615429150672500000,
     "value": 499786679859,
     "usdc-usdt": 249892144544,
     "metis-usdc": 0,
@@ -36,6 +41,7 @@
   },
   {
     "address": "0x461e76a4fe9f27605d4097a646837c32f1ccc31c",
+    "bHermes": 44528615429150672500000,
     "value": 391086740398,
     "usdc-usdt": 195542434801,
     "metis-usdc": 0,
@@ -43,6 +49,7 @@
   },
   {
     "address": "0xcdf46720bdf30d6bd0912162677c865d4344b0ca",
+    "bHermes": 44528615429150672500000,
     "value": 282624383741,
     "usdc-usdt": 141311515892,
     "metis-usdc": 0,
@@ -50,6 +57,7 @@
   },
   {
     "address": "0xbdfa4f4492dd7b7cf211209c4791af8d52bf5c50",
+    "bHermes": 44528615429150672500000,
     "value": 258374840249,
     "usdc-usdt": 129186802146,
     "metis-usdc": 0,
@@ -57,6 +65,7 @@
   },
   {
     "address": "0xc3373905f94e16035f7e01fd5178586e5f478c81",
+    "bHermes": 44528615429150672500000,
     "value": 247456473150,
     "usdc-usdt": 123727644711,
     "metis-usdc": 0,
@@ -64,6 +73,7 @@
   },
   {
     "address": "0xe9da0d4d2acc12bbb8543f300eaf0882ea3b4ef8",
+    "bHermes": 44528615429150672500000,
     "value": 193587752851,
     "usdc-usdt": 96793413404,
     "metis-usdc": 0,
@@ -71,6 +81,7 @@
   },
   {
     "address": "0x39de56518e136d472ef9645e7d6e1f7c6c8ed37b",
+    "bHermes": 44528615429150672500000,
     "value": 166595511003,
     "usdc-usdt": 83297357040,
     "metis-usdc": 0,
@@ -78,6 +89,7 @@
   },
   {
     "address": "0x193f0ee42a199a0cecd479a9f09ba293eb1ca357",
+    "bHermes": 44528615429150672500000,
     "value": 101937871502,
     "usdc-usdt": 50968691937,
     "metis-usdc": 0,
@@ -85,6 +97,7 @@
   },
   {
     "address": "0x8e9a57bbcbf2df7d58130a55a697c4385af1044a",
+    "bHermes": 44528615429150672500000,
     "value": 101586659984,
     "usdc-usdt": 50793087018,
     "metis-usdc": 0,
@@ -92,6 +105,7 @@
   },
   {
     "address": "0x4632ba70a622366493ce1662b975ddb85321c3b7",
+    "bHermes": 42777186958109978506676,
     "value": 96066734943,
     "usdc-usdt": 48033137700,
     "metis-usdc": 0,
@@ -99,6 +113,7 @@
   },
   {
     "address": "0x54c6ac6d33a7478c81385556a472c5b41f9fd30b",
+    "bHermes": 42722536043941848634031,
     "value": 95944002822,
     "usdc-usdt": 47971771933,
     "metis-usdc": 0,
@@ -106,6 +121,7 @@
   },
   {
     "address": "0x7eb9d67f9daea510399a1ee978b36e66626058d3",
+    "bHermes": 41573547235104158422517,
     "value": 93363664768,
     "usdc-usdt": 46681609078,
     "metis-usdc": 0,
@@ -113,6 +129,7 @@
   },
   {
     "address": "0x4f5fe8da30c1c11fe537730940ced62ac37ea371",
+    "bHermes": 37409972132436784038237,
     "value": 84013328894,
     "usdc-usdt": 42006463505,
     "metis-usdc": 0,
@@ -120,6 +137,7 @@
   },
   {
     "address": "0x02ed9b4cf1c463b6bacfcf184e15cbe5e49fc47a",
+    "bHermes": 29724742114494390108077,
     "value": 66754247416,
     "usdc-usdt": 33376964046,
     "metis-usdc": 0,
@@ -127,6 +145,7 @@
   },
   {
     "address": "0x601cc773c1cb38673be5cbc75ecb3a1b2a79afec",
+    "bHermes": 26391684378295811386509,
     "value": 59269043342,
     "usdc-usdt": 29634379912,
     "metis-usdc": 0,
@@ -134,6 +153,7 @@
   },
   {
     "address": "0xa5caf360a187f5aea3ed346f251dff02f7825e20",
+    "bHermes": 25838801981013547680217,
     "value": 58027409413,
     "usdc-usdt": 29013565917,
     "metis-usdc": 0,
@@ -141,6 +161,7 @@
   },
   {
     "address": "0x4f862899c42645bec4b73ab20e4d06688f592f6f",
+    "bHermes": 22893932163290759661095,
     "value": 51413977153,
     "usdc-usdt": 25706865605,
     "metis-usdc": 0,
@@ -148,6 +169,7 @@
   },
   {
     "address": "0x667f2824c528587612fd4f5bfc40189263244b86",
+    "bHermes": 22536163402041404981771,
     "value": 50610519067,
     "usdc-usdt": 25305138484,
     "metis-usdc": 0,
@@ -155,6 +177,7 @@
   },
   {
     "address": "0x7dba8b857e1b9293e74abac71577056d295bb998",
+    "bHermes": 19672513557554169106410,
     "value": 44179486310,
     "usdc-usdt": 22089637487,
     "metis-usdc": 0,
@@ -162,6 +185,7 @@
   },
   {
     "address": "0xcfea48cf6ba36e0328a6ead0fdb4c2642d21c59d",
+    "bHermes": 17783689839440366970130,
     "value": 39937666303,
     "usdc-usdt": 19968737629,
     "metis-usdc": 0,
@@ -169,6 +193,7 @@
   },
   {
     "address": "0x31ce3215280b13557849f79686814789499ebd22",
+    "bHermes": 16501995966117133347207,
     "value": 37059306262,
     "usdc-usdt": 18529564493,
     "metis-usdc": 0,
@@ -176,6 +201,7 @@
   },
   {
     "address": "0xdc6becc975b73e5f777c17a3f1f337d0fe2c1aac",
+    "bHermes": 12912949225836016493279,
     "value": 28999215676,
     "usdc-usdt": 14499538478,
     "metis-usdc": 0,
@@ -183,6 +209,7 @@
   },
   {
     "address": "0x0565978e02bb9bdae46d599a55ab1cbc0df45e9c",
+    "bHermes": 12665389776754358409828,
     "value": 28443259811,
     "usdc-usdt": 0,
     "metis-usdc": 0,
@@ -190,6 +217,7 @@
   },
   {
     "address": "0xe968a888792b3c6ca4242a87445e2518f88f2e02",
+    "bHermes": 12651923820275228897062,
     "value": 28413018681,
     "usdc-usdt": 10180759267,
     "metis-usdc": 388320203961640,
@@ -197,6 +225,7 @@
   },
   {
     "address": "0x7c5534e88f8a7b3f81290a4372d85dbd4b9b2ae2",
+    "bHermes": 12090906271604711897281,
     "value": 27153115261,
     "usdc-usdt": 0,
     "metis-usdc": 1309598288440896,
@@ -204,6 +233,7 @@
   },
   {
     "address": "0xa12b6c47da747fabb2f5a8ddae2fd9b029dc4807",
+    "bHermes": 11045334735275506762680,
     "value": 24805026226,
     "usdc-usdt": 12402453785,
     "metis-usdc": 0,
@@ -211,6 +241,7 @@
   },
   {
     "address": "0x70dadc7dcaaaeee9819addae6e3261f7ddc18f66",
+    "bHermes": 10025464925634819513772,
     "value": 22514656764,
     "usdc-usdt": 11257274532,
     "metis-usdc": 0,
@@ -218,6 +249,7 @@
   },
   {
     "address": "0x1255e17fff07322231a4124bb455c85d20d0a2c4",
+    "bHermes": 9813908492320240610244,
     "value": 22039554560,
     "usdc-usdt": 11019724566,
     "metis-usdc": 0,
@@ -225,6 +257,7 @@
   },
   {
     "address": "0xf86a8847598d74dbcbc1120bb807a3c19f684d29",
+    "bHermes": 9034127485799155063990,
     "value": 20288363783,
     "usdc-usdt": 10144133366,
     "metis-usdc": 0,
@@ -232,6 +265,7 @@
   },
   {
     "address": "0xb8c2c00cc883d087c0cbd443cec51a4d04f8b147",
+    "bHermes": 8900020032646424438387,
     "value": 19987192386,
     "usdc-usdt": 9993548388,
     "metis-usdc": 0,
@@ -239,6 +273,7 @@
   },
   {
     "address": "0x81db2dfd33b24419f0f715e331f678411eb1ec30",
+    "bHermes": 8841893645794892418425,
     "value": 19856655233,
     "usdc-usdt": 9928280124,
     "metis-usdc": 0,
@@ -246,6 +281,7 @@
   },
   {
     "address": "0x263a13fbe5416661d8ff67c5d98624d1553900ae",
+    "bHermes": 8385800548381309438613,
     "value": 18832385574,
     "usdc-usdt": 9416147744,
     "metis-usdc": 0,
@@ -253,6 +289,7 @@
   },
   {
     "address": "0xbddac3e91fb049bb369a40e8b6ddde0332117322",
+    "bHermes": 8028346363097943228547,
     "value": 18029633946,
     "usdc-usdt": 9014773850,
     "metis-usdc": 0,
@@ -260,6 +297,7 @@
   },
   {
     "address": "0x4db8ac0c360c40dfcb674c7129ed1b73e0d2e9c0",
+    "bHermes": 7891198622990264168105,
     "value": 17721634834,
     "usdc-usdt": 8860775031,
     "metis-usdc": 0,
@@ -267,6 +305,7 @@
   },
   {
     "address": "0xf28570694a6c9cd0494955966ae75af61abf5a07",
+    "bHermes": 7534886288109350748774,
     "value": 16921447513,
     "usdc-usdt": 8460683284,
     "metis-usdc": 0,
@@ -274,6 +313,7 @@
   },
   {
     "address": "0x9522fc0bd3451b518e4dde2de6926bc8f8df8dc2",
+    "bHermes": 6374863036336353671621,
     "value": 14316328893,
     "usdc-usdt": 7158130205,
     "metis-usdc": 0,
@@ -281,6 +321,7 @@
   },
   {
     "address": "0x48ee69490345c7080240db090e65a4ae1049e16a",
+    "bHermes": 6072842930501709847603,
     "value": 13638068177,
     "usdc-usdt": 0,
     "metis-usdc": 657765805933342,
@@ -288,6 +329,7 @@
   },
   {
     "address": "0x51fd44ba77b3066949b874f24c374819ef78809a",
+    "bHermes": 6059857411065891613103,
     "value": 13608905987,
     "usdc-usdt": 6804420444,
     "metis-usdc": 0,
@@ -295,6 +337,7 @@
   },
   {
     "address": "0xf03df965490882583018c64fd41fa82d7dee032f",
+    "bHermes": 5990660424043324257157,
     "value": 13453507068,
     "usdc-usdt": 0,
     "metis-usdc": 648864399587120,
@@ -302,6 +345,7 @@
   },
   {
     "address": "0xde8764431aa67f37c135c4bf07dc32ae2b647d23",
+    "bHermes": 5436119662231075783989,
     "value": 12208148872,
     "usdc-usdt": 6104045237,
     "metis-usdc": 0,
@@ -309,6 +353,7 @@
   },
   {
     "address": "0x603e02f4d63ec598d0805f5e4656d6205d23fbfd",
+    "bHermes": 5179334021625919357272,
     "value": 11631473316,
     "usdc-usdt": 5815708838,
     "metis-usdc": 0,
@@ -316,6 +361,7 @@
   },
   {
     "address": "0x6d0bbe84eba47434a0004fc65797b87ef1c913b7",
+    "bHermes": 4933901153239052788561,
     "value": 11080293213,
     "usdc-usdt": 5540120105,
     "metis-usdc": 0,
@@ -323,6 +369,7 @@
   },
   {
     "address": "0x5fb52b83b5796c069ced3b64eae162042d9e51a6",
+    "bHermes": 4849865856511847976365,
     "value": 10891571206,
     "usdc-usdt": 5445759553,
     "metis-usdc": 0,
@@ -330,6 +377,7 @@
   },
   {
     "address": "0xb5b9c19039091b59e0bf415a184359593fff9bba",
+    "bHermes": 4692196069138622255040,
     "value": 10537484770,
     "usdc-usdt": 5268717182,
     "metis-usdc": 0,
@@ -337,6 +385,7 @@
   },
   {
     "address": "0xf039a64288e378c40e16eb94367a5679827e075b",
+    "bHermes": 4564667459313720689350,
     "value": 10251087790,
     "usdc-usdt": 5125519377,
     "metis-usdc": 0,
@@ -344,6 +393,7 @@
   },
   {
     "address": "0x7d54d807e9132fc34acde66de49b36d4f37e8e0c",
+    "bHermes": 4549997175222402053122,
     "value": 10218142045,
     "usdc-usdt": 2602960879,
     "metis-usdc": 241738836737132,
@@ -351,6 +401,7 @@
   },
   {
     "address": "0x49321256e60aa605fdd5abb85e96308ad0b19c5f",
+    "bHermes": 4454217566606725015348,
     "value": 10003045286,
     "usdc-usdt": 0,
     "metis-usdc": 482448178032529,
@@ -358,6 +409,7 @@
   },
   {
     "address": "0x7f1884212af6d24d983cd0c34b09c07bd5bd66ed",
+    "bHermes": 4373456866408856828830,
     "value": 9821677194,
     "usdc-usdt": 4910815106,
     "metis-usdc": 0,
@@ -365,6 +417,7 @@
   },
   {
     "address": "0x962a211f581bdd5bc3950d3048a45cc9e240f260",
+    "bHermes": 4242995394913729654298,
     "value": 9528693749,
     "usdc-usdt": 4764324084,
     "metis-usdc": 0,
@@ -372,6 +425,7 @@
   },
   {
     "address": "0x47e84636928922ce8904c3d89bb92e0e3cd1bc63",
+    "bHermes": 4155737204723135311854,
     "value": 9332733939,
     "usdc-usdt": 4666344648,
     "metis-usdc": 0,
@@ -379,6 +433,7 @@
   },
   {
     "address": "0xad121bd193146e8f0463d6e613eb5139118e5507",
+    "bHermes": 4099539893673803425990,
     "value": 9206529002,
     "usdc-usdt": 4603242481,
     "metis-usdc": 0,
@@ -386,6 +441,7 @@
   },
   {
     "address": "0xb376ba77faaf74ca93e3a75f7f61d2e76b1f73a9",
+    "bHermes": 3662504303598308501524,
     "value": 8225057681,
     "usdc-usdt": 4112509168,
     "metis-usdc": 0,
@@ -393,6 +449,7 @@
   },
   {
     "address": "0x7949ed1b419126e201abe404a65a226e2d5dc6d4",
+    "bHermes": 3440044698597280177123,
     "value": 7725469713,
     "usdc-usdt": 3862716379,
     "metis-usdc": 0,
@@ -400,6 +457,7 @@
   },
   {
     "address": "0xc87d6fd2b03554bca205aac771ab67a041ee8902",
+    "bHermes": 3431033459168470664315,
     "value": 7705232750,
     "usdc-usdt": 3852597946,
     "metis-usdc": 0,
@@ -407,6 +465,7 @@
   },
   {
     "address": "0x86219301a71c65a8f2c3e0ffce65bcdad7a01003",
+    "bHermes": 3405758028070336061167,
     "value": 7648470529,
     "usdc-usdt": 3824216971,
     "metis-usdc": 0,
@@ -414,6 +473,7 @@
   },
   {
     "address": "0x32524b1df07d622d38319d81ea1c4f4a29187437",
+    "bHermes": 3351115288465426672003,
     "value": 7525756766,
     "usdc-usdt": 3762860383,
     "metis-usdc": 0,
@@ -421,6 +481,7 @@
   },
   {
     "address": "0x63095ce68ae2f6dc0a3e068d97f2d392c51ebd06",
+    "bHermes": 3082620061612540442859,
     "value": 6922784443,
     "usdc-usdt": 3461375664,
     "metis-usdc": 0,
@@ -428,6 +489,7 @@
   },
   {
     "address": "0x4d3db8180068107dbce28697537520ce85a3c52a",
+    "bHermes": 3000906540773436216000,
     "value": 6739276557,
     "usdc-usdt": 3369622160,
     "metis-usdc": 0,
@@ -435,6 +497,7 @@
   },
   {
     "address": "0x0a60631fff509ebf45a6e06309853ef1dd8c7101",
+    "bHermes": 2989271868577732108082,
     "value": 6713148028,
     "usdc-usdt": 3356557958,
     "metis-usdc": 0,
@@ -442,6 +505,7 @@
   },
   {
     "address": "0xd8b1d41a77f12bb972ead1b4c3503693f1cd0560",
+    "bHermes": 2598280989535076486593,
     "value": 5835081474,
     "usdc-usdt": 2917526781,
     "metis-usdc": 0,
@@ -449,6 +513,7 @@
   },
   {
     "address": "0xaeae3201957353a9d0dd24321e866e92e1c13d86",
+    "bHermes": 2590007478832961736135,
     "value": 5816501263,
     "usdc-usdt": 2908236720,
     "metis-usdc": 0,
@@ -456,6 +521,7 @@
   },
   {
     "address": "0xc1d4bfd94909b589bee19062e375d17bbd5e6799",
+    "bHermes": 2561553408145309555552,
     "value": 5752600622,
     "usdc-usdt": 2876286552,
     "metis-usdc": 0,
@@ -463,6 +529,7 @@
   },
   {
     "address": "0xec31c19e74c12d16f18c6e0338f6e86e07f3f85b",
+    "bHermes": 2527696485067016789902,
     "value": 5676566542,
     "usdc-usdt": 2838269694,
     "metis-usdc": 0,
@@ -470,6 +537,7 @@
   },
   {
     "address": "0xc325343fa3911a0d9983a3007d4dbf6cd03a393f",
+    "bHermes": 2281233992637735827479,
     "value": 5123074164,
     "usdc-usdt": 2561524829,
     "metis-usdc": 0,
@@ -477,6 +545,7 @@
   },
   {
     "address": "0xb41ae9c88c49b205b471aded610f55293adada5d",
+    "bHermes": 2230381490038260320197,
     "value": 5008872314,
     "usdc-usdt": 2504424177,
     "metis-usdc": 0,
@@ -484,6 +553,7 @@
   },
   {
     "address": "0x5bee7135d309838166e62acd74db73ffb1d417c5",
+    "bHermes": 2215501545187624299485,
     "value": 4975455724,
     "usdc-usdt": 2487715962,
     "metis-usdc": 0,
@@ -491,6 +561,7 @@
   },
   {
     "address": "0x789a9fe9d50ecf6f16022b93ba90b65a4a04bf5d",
+    "bHermes": 2155784362863018168752,
     "value": 4841346047,
     "usdc-usdt": 0,
     "metis-usdc": 233498750957277,
@@ -498,6 +569,7 @@
   },
   {
     "address": "0x06231f4222280e81e02efa6e68c2a9f1f442ee53",
+    "bHermes": 2135674222656351168958,
     "value": 4796183762,
     "usdc-usdt": 2398080410,
     "metis-usdc": 0,
@@ -505,6 +577,7 @@
   },
   {
     "address": "0x77f382fc12e282e922489ef6c2ac1c7b79ce0a8a",
+    "bHermes": 2128772523711780743511,
     "value": 4780684293,
     "usdc-usdt": 633228344,
     "metis-usdc": 169491363320998,
@@ -512,6 +585,7 @@
   },
   {
     "address": "0xc5e191a1067f8f4bc6f3189e6709e58cf0ce90f7",
+    "bHermes": 2111231323043018452817,
     "value": 4741291196,
     "usdc-usdt": 2370634258,
     "metis-usdc": 0,
@@ -519,6 +593,7 @@
   },
   {
     "address": "0xde4b26e8e226cccd6be89af396e22860baf69d64",
+    "bHermes": 2105862988789772391061,
     "value": 4729235276,
     "usdc-usdt": 2364606327,
     "metis-usdc": 0,
@@ -526,6 +601,7 @@
   },
   {
     "address": "0x255be6d417d25d553414fb9608ef6303af9eb771",
+    "bHermes": 1940837439727583651965,
     "value": 4358629661,
     "usdc-usdt": 2179304406,
     "metis-usdc": 0,
@@ -533,6 +609,7 @@
   },
   {
     "address": "0x1c6e11ebfe3d1c68de4c316214ff29dab03f780f",
+    "bHermes": 1811337602867830563860,
     "value": 4067805804,
     "usdc-usdt": 2033893173,
     "metis-usdc": 0,
@@ -540,6 +617,7 @@
   },
   {
     "address": "0xff983307058da622633cfcd2cace59a90532228c",
+    "bHermes": 1810143549788365562625,
     "value": 4065124263,
     "usdc-usdt": 0,
     "metis-usdc": 196061473112387,
@@ -547,6 +625,7 @@
   },
   {
     "address": "0x79c9f7800a0fcf034e8dfd7129ec955a876c2096",
+    "bHermes": 1675945660353556794880,
     "value": 3763749769,
     "usdc-usdt": 0,
     "metis-usdc": 181526141978991,
@@ -554,6 +633,7 @@
   },
   {
     "address": "0xb7973c6d5209b1bf5c198789830b67d5fe340dad",
+    "bHermes": 1546110882365548715456,
     "value": 3472173719,
     "usdc-usdt": 1736078555,
     "metis-usdc": 0,
@@ -561,6 +641,7 @@
   },
   {
     "address": "0xf1253ae06a4e2c7051494631c67770f9010e8417",
+    "bHermes": 1496561147233677709318,
     "value": 3360897555,
     "usdc-usdt": 1680440739,
     "metis-usdc": 0,
@@ -568,6 +649,7 @@
   },
   {
     "address": "0xce0bdca2bb503639ae43e280fba9a49f966f7b8a",
+    "bHermes": 1489244936751511171758,
     "value": 3344467198,
     "usdc-usdt": 1672225600,
     "metis-usdc": 0,
@@ -575,6 +657,7 @@
   },
   {
     "address": "0xe236f6b2f8d6329cb4995b2ea7d6a3248fbc9433",
+    "bHermes": 1481607506188647981369,
     "value": 3327315462,
     "usdc-usdt": 1663649773,
     "metis-usdc": 0,
@@ -582,6 +665,7 @@
   },
   {
     "address": "0xcdeaf60d646b955dfa71fcab73621d5578acb4eb",
+    "bHermes": 1459672633639029821956,
     "value": 3278055290,
     "usdc-usdt": 1639019805,
     "metis-usdc": 0,
@@ -589,6 +673,7 @@
   },
   {
     "address": "0xf60f773494889f18fc7eabbcd5705334bb7cc6dc",
+    "bHermes": 1415072921596054196035,
     "value": 3177895625,
     "usdc-usdt": 1588940212,
     "metis-usdc": 0,
@@ -596,6 +681,7 @@
   },
   {
     "address": "0x0e6760f071d788733ffddf73292cd36fbef67f98",
+    "bHermes": 1388275966856010148943,
     "value": 3117716447,
     "usdc-usdt": 0,
     "metis-usdc": 150367870665222,
@@ -603,6 +689,7 @@
   },
   {
     "address": "0x2e7296ebc57fcf7c0b112d2a46062017be2b1792",
+    "bHermes": 1302529202998490536236,
     "value": 2925150918,
     "usdc-usdt": 1462568463,
     "metis-usdc": 0,
@@ -610,6 +697,7 @@
   },
   {
     "address": "0x97eda3c9f1e4c7ef743b552ab687aa49fca804c0",
+    "bHermes": 1284253794480655466136,
     "value": 2884108976,
     "usdc-usdt": 1442047590,
     "metis-usdc": 0,
@@ -617,6 +705,7 @@
   },
   {
     "address": "0x52021632e37500fa03cad93ea385f8d9e6138e33",
+    "bHermes": 1204153222546087506799,
     "value": 2704223365,
     "usdc-usdt": 1352105215,
     "metis-usdc": 0,
@@ -624,6 +713,7 @@
   },
   {
     "address": "0xdffef5d853e5e1dad3b909e37ba2dae94087c3cc",
+    "bHermes": 1197499493219260472742,
     "value": 2689280773,
     "usdc-usdt": 0,
     "metis-usdc": 129704362236153,
@@ -631,6 +721,7 @@
   },
   {
     "address": "0x7adaa3c9d9394ec49a8a4a1a06dd5873dba4213c",
+    "bHermes": 967182486295148953630,
     "value": 2172047069,
     "usdc-usdt": 0,
     "metis-usdc": 104758113287209,
@@ -638,6 +729,7 @@
   },
   {
     "address": "0xc80fdaccc65dcd6ed030fc416190f1c2ab7b12ac",
+    "bHermes": 954369094448702872511,
     "value": 2143271434,
     "usdc-usdt": 907784319,
     "metis-usdc": 15804729758941,
@@ -645,6 +737,7 @@
   },
   {
     "address": "0x4bab464da1bf310b60b4b1bf0bb15932be61d6dd",
+    "bHermes": 920373468740923691140,
     "value": 2066925863,
     "usdc-usdt": 1033457988,
     "metis-usdc": 0,
@@ -652,6 +745,7 @@
   },
   {
     "address": "0xf7cb62bf544513be4d013f742f70d842c48633cf",
+    "bHermes": 897265171883510393125,
     "value": 2015030477,
     "usdc-usdt": 1007510419,
     "metis-usdc": 0,
@@ -659,6 +753,7 @@
   },
   {
     "address": "0xea2c034b98f412bd80822c6543592c5c1e49d147",
+    "bHermes": 895073648874832387878,
     "value": 2010108871,
     "usdc-usdt": 0,
     "metis-usdc": 0,
@@ -666,6 +761,7 @@
   },
   {
     "address": "0x90f15e09b8fb5bc080b968170c638920db3a3446",
+    "bHermes": 882914259490061945683,
     "value": 1982801960,
     "usdc-usdt": 0,
     "metis-usdc": 95630797006377,
@@ -673,6 +769,7 @@
   },
   {
     "address": "0x6dffaf5fc3ff7605c6a41f57653917343140efeb",
+    "bHermes": 827205344974049298768,
     "value": 1857693838,
     "usdc-usdt": 928842476,
     "metis-usdc": 0,
@@ -680,6 +777,7 @@
   },
   {
     "address": "0x580a5b2f32bd14af9da1e01ef41feb754f78c350",
+    "bHermes": 816921735091671840230,
     "value": 1834599453,
     "usdc-usdt": 917295339,
     "metis-usdc": 0,
@@ -687,6 +785,7 @@
   },
   {
     "address": "0x21a0b6fd81ec697e326228df279f9add0d1b021a",
+    "bHermes": 666483277308595455161,
     "value": 1496752753,
     "usdc-usdt": 748372797,
     "metis-usdc": 0,
@@ -694,6 +793,7 @@
   },
   {
     "address": "0x22a000343625075f74c5adc8aeb061e0c916022a",
+    "bHermes": 666349984905883681247,
     "value": 1496453412,
     "usdc-usdt": 748223127,
     "metis-usdc": 0,
@@ -701,6 +801,7 @@
   },
   {
     "address": "0x8ca4ae4152219ef8f4257759064dc857ca823dbd",
+    "bHermes": 651069147149394399865,
     "value": 1462136518,
     "usdc-usdt": 0,
     "metis-usdc": 70519034854831,
@@ -708,6 +809,7 @@
   },
   {
     "address": "0xd8827d60486e01a6c54f7fc2ddcd9527a26af8ba",
+    "bHermes": 607629600573683728642,
     "value": 1364582291,
     "usdc-usdt": 0,
     "metis-usdc": 65813981795557,
@@ -715,6 +817,7 @@
   },
   {
     "address": "0x5d7666fbd993e92c8bebac5747a82ea2b8f8e5b3",
+    "bHermes": 570889126813891595606,
     "value": 1282072486,
     "usdc-usdt": 641033177,
     "metis-usdc": 0,
@@ -722,6 +825,7 @@
   },
   {
     "address": "0x8459c5b750e1594912293982f170225e08fd138a",
+    "bHermes": 568181147119595517823,
     "value": 1275991049,
     "usdc-usdt": 637992473,
     "metis-usdc": 0,
@@ -729,6 +833,7 @@
   },
   {
     "address": "0x8c22715021187ee54a651208501c0eb975839c86",
+    "bHermes": 565964065576233488673,
     "value": 1271012045,
     "usdc-usdt": 635502983,
     "metis-usdc": 0,
@@ -736,6 +841,7 @@
   },
   {
     "address": "0x1a2b292661f0102c5961afc42b278fe8c9169234",
+    "bHermes": 442700418559862140266,
     "value": 994193092,
     "usdc-usdt": 0,
     "metis-usdc": 47950062448971,
@@ -743,6 +849,7 @@
   },
   {
     "address": "0xd028babbdc15949aaa35587f95f9e96c7d49417d",
+    "bHermes": 437609291413250250232,
     "value": 982759709,
     "usdc-usdt": 491377504,
     "metis-usdc": 0,
@@ -750,6 +857,7 @@
   },
   {
     "address": "0x900a2ef0d2215874844cb63294f21c5ec687d166",
+    "bHermes": 430836974813670764979,
     "value": 967550800,
     "usdc-usdt": 483773086,
     "metis-usdc": 0,
@@ -757,6 +865,7 @@
   },
   {
     "address": "0x3115ba406ad02d875ca84c0dc861b05e06ca684d",
+    "bHermes": 420248840409665659365,
     "value": 943772530,
     "usdc-usdt": 471884008,
     "metis-usdc": 0,
@@ -764,6 +873,7 @@
   },
   {
     "address": "0xd3298c4ddc1e6ccc05ab4b925a3b42ba12a65e74",
+    "bHermes": 407524401597117775379,
     "value": 915196661,
     "usdc-usdt": 457596142,
     "metis-usdc": 0,
@@ -771,6 +881,7 @@
   },
   {
     "address": "0xe5ae5aac9a19ec43abdd161e95640a1cc12ae348",
+    "bHermes": 402065973932132375941,
     "value": 902938414,
     "usdc-usdt": 0,
     "metis-usdc": 43548837428396,
@@ -778,6 +889,7 @@
   },
   {
     "address": "0xa946c445bf7f1675309fcd3a968da4da4e3a107a",
+    "bHermes": 401577139682523468442,
     "value": 901840616,
     "usdc-usdt": 450918151,
     "metis-usdc": 0,
@@ -785,6 +897,7 @@
   },
   {
     "address": "0x87afaa198117496bce792b6a5de3b33ba7cac73f",
+    "bHermes": 397718175876177772537,
     "value": 893174360,
     "usdc-usdt": 446585044,
     "metis-usdc": 0,
@@ -792,6 +905,7 @@
   },
   {
     "address": "0xbf971a2660b8ff8c3c376d5d2000b4c422d2babf",
+    "bHermes": 371384467907458580094,
     "value": 834035517,
     "usdc-usdt": 417015764,
     "metis-usdc": 0,
@@ -799,6 +913,7 @@
   },
   {
     "address": "0xfc6c82514573f7c40e3a1592e2444d6885b2fadf",
+    "bHermes": 331265333798785741967,
     "value": 743938096,
     "usdc-usdt": 371967269,
     "metis-usdc": 0,
@@ -806,6 +921,7 @@
   },
   {
     "address": "0xf94f7b6b956225bce60a5f0c7b82d347071e48dc",
+    "bHermes": 297852442058401689577,
     "value": 668901198,
     "usdc-usdt": 113343380,
     "metis-usdc": 21328007738027,
@@ -813,6 +929,7 @@
   },
   {
     "address": "0xa198e245bf6929c1a1899e36bf957417143d4f7f",
+    "bHermes": 236750590783832220868,
     "value": 531681905,
     "usdc-usdt": 0,
     "metis-usdc": 25643087584376,
@@ -820,6 +937,7 @@
   },
   {
     "address": "0xa779fcb74578a6efe793d539c1ee987d92554e5c",
+    "bHermes": 0,
     "value": 498261345,
     "usdc-usdt": 249129481,
     "metis-usdc": 0,
@@ -827,6 +945,7 @@
   },
   {
     "address": "0x4fada7757edd7583c4a82a9d15d83a1a4d53a557",
+    "bHermes": 0,
     "value": 498221805,
     "usdc-usdt": 249109711,
     "metis-usdc": 0,
@@ -834,6 +953,7 @@
   },
   {
     "address": "0xb62ea019c3ecf647c21b3d394f373c4089e3e4d6",
+    "bHermes": 0,
     "value": 493209317,
     "usdc-usdt": 246603479,
     "metis-usdc": 0,
@@ -841,6 +961,7 @@
   },
   {
     "address": "0x0442dd88a482833fe2ca98a6b66526aa640321f3",
+    "bHermes": 0,
     "value": 455014596,
     "usdc-usdt": 227506210,
     "metis-usdc": 0,
@@ -848,6 +969,7 @@
   },
   {
     "address": "0xf197d1037e1171d5881d22a44d0ea6b2f9aedbe5",
+    "bHermes": 0,
     "value": 451699726,
     "usdc-usdt": 225848783,
     "metis-usdc": 0,
@@ -855,6 +977,7 @@
   },
   {
     "address": "0x23ae5504ce12af5678ab3ae270472a428f1d06d4",
+    "bHermes": 0,
     "value": 323913601,
     "usdc-usdt": 161956026,
     "metis-usdc": 0,
@@ -862,6 +985,7 @@
   },
   {
     "address": "0x6969e2041b22fcebdb3b4f7a39c0ada38b152f52",
+    "bHermes": 0,
     "value": 295469877,
     "usdc-usdt": 0,
     "metis-usdc": 14250550717848,
@@ -869,6 +993,7 @@
   },
   {
     "address": "0xf5f61157f3c13e4bbc5c42e75ae80946b72de83f",
+    "bHermes": 0,
     "value": 280649008,
     "usdc-usdt": 0,
     "metis-usdc": 13535738271325,
@@ -876,6 +1001,7 @@
   },
   {
     "address": "0xa06b4f71b94ec6b59e0633c015772d3f1efdf7ca",
+    "bHermes": 0,
     "value": 266823418,
     "usdc-usdt": 133411071,
     "metis-usdc": 0,
@@ -883,6 +1009,7 @@
   },
   {
     "address": "0x3af0f49ae5accceec4289ad7df477409b248b529",
+    "bHermes": 0,
     "value": 263596172,
     "usdc-usdt": 0,
     "metis-usdc": 12713277781267,
@@ -890,6 +1017,7 @@
   },
   {
     "address": "0xc5e3e804a39919d5e3821d204bb38356d00c162c",
+    "bHermes": 0,
     "value": 255410338,
     "usdc-usdt": 0,
     "metis-usdc": 12318473935444,
@@ -897,6 +1025,7 @@
   },
   {
     "address": "0x8246dd76d12a2b839fa36bee3a83978648c476c4",
+    "bHermes": 0,
     "value": 252661832,
     "usdc-usdt": 0,
     "metis-usdc": 12185913099238,
@@ -904,6 +1033,7 @@
   },
   {
     "address": "0xae69116e4aa49645f78c1fc9f28f677aede0d153",
+    "bHermes": 0,
     "value": 249955926,
     "usdc-usdt": 0,
     "metis-usdc": 12055406926058,
@@ -911,6 +1041,7 @@
   },
   {
     "address": "0x4c336dd5e6bf2998cd9ded78ece1f0152d5f5b89",
+    "bHermes": 0,
     "value": 249855773,
     "usdc-usdt": 0,
     "metis-usdc": 12050576541009,
@@ -918,6 +1049,7 @@
   },
   {
     "address": "0x018b90197b9df85fa9130191678f937a535374b9",
+    "bHermes": 0,
     "value": 249712238,
     "usdc-usdt": 124855522,
     "metis-usdc": 0,
@@ -925,6 +1057,7 @@
   },
   {
     "address": "0xdb5ee516b26f70739ec1a18b155ace18a1168d00",
+    "bHermes": 0,
     "value": 248128658,
     "usdc-usdt": 0,
     "metis-usdc": 11967277524704,
@@ -932,6 +1065,7 @@
   },
   {
     "address": "0xc45d05cdc809d20c7b14959e8cd4a1199e3e966f",
+    "bHermes": 0,
     "value": 247847946,
     "usdc-usdt": 0,
     "metis-usdc": 11953738744178,
@@ -939,6 +1073,7 @@
   },
   {
     "address": "0x06f2de7cc99da93e4b5a9f01f2ae196687856792",
+    "bHermes": 0,
     "value": 243769134,
     "usdc-usdt": 121883984,
     "metis-usdc": 0,
@@ -946,6 +1081,7 @@
   },
   {
     "address": "0x909ee3e2990ccf8ce2aaa3ccdbc5b61800289fa3",
+    "bHermes": 0,
     "value": 225967688,
     "usdc-usdt": 0,
     "metis-usdc": 10898451091953,
@@ -953,6 +1089,7 @@
   },
   {
     "address": "0xfdbdceee5fc8d37d041f7900ac3916845e33d2e3",
+    "bHermes": 0,
     "value": 212457754,
     "usdc-usdt": 106228369,
     "metis-usdc": 0,
@@ -960,6 +1097,7 @@
   },
   {
     "address": "0xaf1d27eac3777efa9e240688c5ade06907b7f206",
+    "bHermes": 0,
     "value": 199006347,
     "usdc-usdt": 99502698,
     "metis-usdc": 0,
@@ -967,6 +1105,7 @@
   },
   {
     "address": "0x31ffaff3402769ecbf0b01bb4a7d49724d0dd23b",
+    "bHermes": 0,
     "value": 197298251,
     "usdc-usdt": 98648654,
     "metis-usdc": 0,
@@ -974,6 +1113,7 @@
   },
   {
     "address": "0x7882b21fe533a7b56ff507ea614f3215e257b702",
+    "bHermes": 0,
     "value": 183815507,
     "usdc-usdt": 91907314,
     "metis-usdc": 0,
@@ -981,6 +1121,7 @@
   },
   {
     "address": "0x15b148740043d62b86d3b8df519d2012e4c17798",
+    "bHermes": 0,
     "value": 164310532,
     "usdc-usdt": 0,
     "metis-usdc": 7924718418201,
@@ -988,6 +1129,7 @@
   },
   {
     "address": "0x4c23dfcd99036cd1faab8f7043ec4648afcaed17",
+    "bHermes": 0,
     "value": 149855818,
     "usdc-usdt": 74927551,
     "metis-usdc": 0,
@@ -995,6 +1137,7 @@
   },
   {
     "address": "0x605e06b9134189a590255cd9cd72a354c2d9af33",
+    "bHermes": 0,
     "value": 142350822,
     "usdc-usdt": 71175071,
     "metis-usdc": 0,
@@ -1002,6 +1145,7 @@
   },
   {
     "address": "0xc933333d76261b55065feed8715b5c75e2167af6",
+    "bHermes": 0,
     "value": 126167983,
     "usdc-usdt": 63083690,
     "metis-usdc": 0,
@@ -1009,6 +1153,7 @@
   },
   {
     "address": "0x363bb53b20357489ec6465b26ecceb19b2c833ae",
+    "bHermes": 0,
     "value": 119479371,
     "usdc-usdt": 59739400,
     "metis-usdc": 0,
@@ -1016,6 +1161,7 @@
   },
   {
     "address": "0x2663de7b0fed0f7796e5641a75ed6caa1631443e",
+    "bHermes": 0,
     "value": 115291191,
     "usdc-usdt": 0,
     "metis-usdc": 5560509206735,
@@ -1023,6 +1169,7 @@
   },
   {
     "address": "0x62293bdb8ae6fda7e2844c77fa887c2fd09fba87",
+    "bHermes": 0,
     "value": 112720161,
     "usdc-usdt": 56359811,
     "metis-usdc": 0,
@@ -1030,6 +1177,7 @@
   },
   {
     "address": "0x18d072a783fae1ac81af576276dc1561cfba1013",
+    "bHermes": 0,
     "value": 109324114,
     "usdc-usdt": 54661796,
     "metis-usdc": 0,
@@ -1037,6 +1185,7 @@
   },
   {
     "address": "0x29f46a92078f6011a47df128af735208782579bf",
+    "bHermes": 0,
     "value": 103386392,
     "usdc-usdt": 51692949,
     "metis-usdc": 0,
@@ -1044,6 +1193,7 @@
   },
   {
     "address": "0xd669cce1335664c906ef4d129493678240837411",
+    "bHermes": 0,
     "value": 102583140,
     "usdc-usdt": 51291325,
     "metis-usdc": 0,
@@ -1051,6 +1201,7 @@
   },
   {
     "address": "0x7227ff860eca62dce5f78f8063492cfa92b87b51",
+    "bHermes": 0,
     "value": 102282215,
     "usdc-usdt": 51140863,
     "metis-usdc": 0,
@@ -1058,6 +1209,7 @@
   },
   {
     "address": "0x8810bd54f4d64d59bafbb6da9277011347de80c0",
+    "bHermes": 0,
     "value": 101462325,
     "usdc-usdt": 50730920,
     "metis-usdc": 0,
@@ -1065,6 +1217,7 @@
   },
   {
     "address": "0x46699fda810305d5f5f7e09f08919edb9451533b",
+    "bHermes": 0,
     "value": 101008349,
     "usdc-usdt": 50503933,
     "metis-usdc": 0,
@@ -1072,6 +1225,7 @@
   },
   {
     "address": "0x2629726ecdfaf4fe606db2c5781926ea67e44f57",
+    "bHermes": 0,
     "value": 88017552,
     "usdc-usdt": 0,
     "metis-usdc": 4245098053870,
@@ -1079,6 +1233,7 @@
   },
   {
     "address": "0x2834123c30d7c16d1a7337455505216bb37366d4",
+    "bHermes": 0,
     "value": 77068292,
     "usdc-usdt": 38533962,
     "metis-usdc": 0,
@@ -1086,6 +1241,7 @@
   },
   {
     "address": "0x76ce1afa630da6d54800a309dd7b6f4076b2059d",
+    "bHermes": 0,
     "value": 44810957,
     "usdc-usdt": 1394149,
     "metis-usdc": 0,
@@ -1093,6 +1249,7 @@
   },
   {
     "address": "0x09ff8c8426bc173584bd0ce23a58e50ed5da9367",
+    "bHermes": 0,
     "value": 40305058,
     "usdc-usdt": 20152433,
     "metis-usdc": 0,
@@ -1100,6 +1257,7 @@
   },
   {
     "address": "0x6a509ff1f4d011f3dc023370d9c0f55f0c1870db",
+    "bHermes": 0,
     "value": 36998572,
     "usdc-usdt": 18499198,
     "metis-usdc": 0,
@@ -1107,6 +1265,7 @@
   },
   {
     "address": "0xb1c5ec4aac5dba3b65511228819229c04cb5f4f3",
+    "bHermes": 0,
     "value": 18523416,
     "usdc-usdt": 9261664,
     "metis-usdc": 0,
@@ -1114,6 +1273,7 @@
   },
   {
     "address": "0xd6fd705ee0b31a9300d3e2154bcce777270cbb6f",
+    "bHermes": 0,
     "value": 15550586,
     "usdc-usdt": 7775256,
     "metis-usdc": 0,
@@ -1121,6 +1281,7 @@
   },
   {
     "address": "0xc98c01414712d4aee306dc23ebd934c233205133",
+    "bHermes": 0,
     "value": 6646323,
     "usdc-usdt": 3323146,
     "metis-usdc": 0,
@@ -1128,6 +1289,7 @@
   },
   {
     "address": "0xeeeeee11159c8e4d710b71de734ea35e75d39d94",
+    "bHermes": 0,
     "value": 1449120,
     "usdc-usdt": 724557,
     "metis-usdc": 0,
@@ -1135,6 +1297,7 @@
   },
   {
     "address": "0x603ad2cf7a65b3e3af598d6e884d9cd512056ddb",
+    "bHermes": 0,
     "value": 1189833,
     "usdc-usdt": 594914,
     "metis-usdc": 0,
@@ -1142,6 +1305,7 @@
   },
   {
     "address": "0x656fafabbf1b8c42b4f63ab15f9bee8027a25978",
+    "bHermes": 0,
     "value": 4088,
     "usdc-usdt": 0,
     "metis-usdc": 197201936,
