@@ -1,6 +1,7 @@
 # Airdrop Snapshot
 
 In this folder you will find information about the airdrop! You can find your balance and estimate airdrop amounts in each json file.
+You can also see your joint airdrop amount in [airdrop.json](airdrop.json).
 
 Since there are still a few weeks left until the airdrop, the expected amount is slightly more than the estimated amount shown here due to the few rebases left to accrue before the airdrop is distributed.
 
