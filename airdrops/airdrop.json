@@ -5416,7 +5416,8 @@
     },
     "0xfb0bdb768463ef871e52cf3dde1fc1594027c7eb": {
         "bHermes": 0,
-        "staking 2 balance": 1
+        "staking 2 balance": 1,
+        "isSmartContract": true
     },
     "0xc5d6e9ca11b1029cee37c68f3dc3a1be93ab6fa4": {
         "bHermes": 0,
